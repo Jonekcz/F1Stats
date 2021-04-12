@@ -1,0 +1,88 @@
+﻿@{
+    ViewData["Title"] = "Wyniki wyścigów, następny wyścig";
+}
+<section id="next-race">
+    <h2>Następny wyścig</h2>
+    <p style="font-size: 1.3em">@ViewBag.NextRace.IdToruNavigation.Nazwa</p>
+    <p style="font-size: 1.3em">@ViewBag.NextRace.DataCzas</p>
+</section>
+<section id="last-race">
+    <h2>@DateTime.Now.Year @ViewBag.LastRaceCircuit</h2><br />
+    <table class="table table-striped">
+        <thead class="thead-dark">
+            <tr>
+                <th scope="col">Pozycja</th>
+                <th scope="col">Imię</th>
+                <th scope="col">Nazwisko</th>
+                <th scope="col">Zespół</th>
+                <th scope="col">Czas</th>
+                <th scope="col">Punkty</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in ViewBag.Results)
+            {
+            <tr>
+                <td scope="row">@item.Pozycja</td>
+                <td>@item.IdKierowcyNavigation.Imie</td>
+                <td>@item.IdKierowcyNavigation.Nazwisko</td>
+                <td>@item.IdZespoluNavigation.Nazwa</td>
+                <td>@if(item.Czas != null) @item.Czas.ToString("hh':'mm':'ss':'fff") else @item.Czas</td>
+                <td>@item.Punkty</td>
+            </tr>
+            }
+
+        </tbody>
+    </table>
+</section>
+<section id="drivers">
+    <h2>Kierowcy</h2><br />
+
+    <p>
+        <!-- <a asp-action="Create">Create New</a>-->
+    </p>
+    <table class="table">
+        <thead>
+            <tr>
+                <th scope="col">
+                    Imię
+                </th>
+                <th scope="col">
+                    Nazwisko
+                </th>
+                <th scope="col">
+                    Data urodzenia
+                </th>
+                <th scope="col">
+                    Kraj
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in ViewBag.Drivers)
+            {
+                <tr>
+                    <td>
+                        @item.Imie
+                    </td>
+                    <td>
+                        @item.Nazwisko
+                    </td>
+                    <td>
+                        @item.DataUrodzenia.ToShortDateString()
+                    </td>
+                    <td>
+                        @item.IdKrajuNavigation.Nazwa
+                    </td>
+                    <!--
+                    <td>
+                        <a asp-action="Edit" asp-route-id="@item.IdKierowcy">Edit</a> |
+                        <a asp-action="Details" asp-route-id="@item.IdKierowcy">Details</a> |
+                        <a asp-action="Delete" asp-route-id="@item.IdKierowcy">Delete</a>
+                    </td>
+                    -->
+                </tr>
+            }
+        </tbody>
+    </table>
+</section>

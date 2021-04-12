@@ -1,0 +1,39 @@
+﻿@{
+    ViewData["Title"] = "Zespoły";
+}
+
+<section id="teams">
+    <h2>Zespoły</h2><br />
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th scope="col">
+                    Nazwa
+                </th>
+                <th scope="col">
+                    Kraj
+                </th>
+                <th scope="col">
+                    Dostawca silnika
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in ViewBag.Teams)
+            {
+                <tr>
+                    <td>
+                        @item.Nazwa
+                    </td>
+                    <td>
+                        @item.IdKrajuNavigation.Nazwa
+                    </td>
+                    <td>
+                        @item.DostawcaSilnika
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</section>

@@ -1,0 +1,68 @@
+﻿@{
+    ViewData["Title"] = "Klasyfikacja";
+}
+
+<section id="drivers-standings">
+    <h2>Klasyfikacja generalna</h2><br />
+
+    <table class="table table-striped">
+        <thead class="thead-dark">
+            <tr>
+                <th scope="col">
+                    Imię
+                </th>
+                <th scope="col">
+                    Nazwisko
+                </th>
+                <th scope="col">
+                    Punkty
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in ViewBag.DriverStandings)
+            {
+                <tr>
+                    <td>
+                        @item.Imie
+                    </td>
+                    <td>
+                        @item.Nazwisko
+                    </td>
+                    <td>
+                        @item.Punkty
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</section>
+<section id="teams-standings">
+    <h2>Klasyfikacja konstruktorów</h2><br />
+
+    <table class="table table-striped">
+        <thead class="thead-dark">
+            <tr>
+                <th scope="col">
+                    Zespół
+                </th>
+                <th scope="col">
+                    Punkty
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in ViewBag.TeamsStandings)
+            {
+                <tr>
+                    <td>
+                        @item.Nazwa
+                    </td>
+                    <td>
+                        @item.Punkty
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</section>
