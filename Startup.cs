@@ -46,7 +46,9 @@ namespace F1_Stats
             services.Configure<IdentityOptions>(options =>
             {
                 options.Lockout.MaxFailedAccessAttempts = 10;
+                options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(10);
             });
+            services.ConfigureApplicationCookie(options => options.LoginPath = "/Login");
 
             services.AddControllersWithViews();
             // f1 db
@@ -68,6 +70,10 @@ namespace F1_Stats
                 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
             }
+
+            // custom error page
+            app.UseStatusCodePagesWithReExecute("/Stats/Error/{0}");
+
             app.UseHttpsRedirection();
             app.UseStaticFiles();
 

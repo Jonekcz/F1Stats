@@ -21,6 +21,13 @@ namespace F1_Stats.Controllers
             _context = context;
         }
 
+        //[Route("/Stats/Error/{code:int}")]
+        public IActionResult Error(int code)
+        {
+            ViewData["ErrorCode"] = code;
+            return View("~/Views/Shared/Error.cshtml");
+        }
+
         // GET: Stats
         public async Task<IActionResult> Index()
         {
@@ -28,8 +35,9 @@ namespace F1_Stats.Controllers
 
             var countries = _context.Krajs;
             var teams = _context.Zespols;
-            var drivers = from d in _context.Kierowcas join r in _context.WynikWyscigus on d.IdKierowcy equals r.IdKierowcy join w in _context.Wydarzenies on r.IdWyscigu equals w.IdTerminarza join s in _context.Sezons on w.IdSezonu equals s.IdSezonu where s.Rok == year select d;
-            drivers = drivers.Distinct();
+            var resultTypes = _context.RodzajWynikus;
+            var drivers = await(from d in _context.Kierowcas join r in _context.WynikWyscigus on d.IdKierowcy equals r.IdKierowcy join w in _context.Wydarzenies on r.IdWyscigu equals w.IdTerminarza join s in _context.Sezons on w.IdSezonu equals s.IdSezonu where s.Rok == year select d).ToListAsync();
+            //drivers = (List<Kierowca>)drivers.Distinct();
 
             // last race
             var lastRace = _context.Wydarzenies.OrderBy(w=>w.DataCzas).Reverse().First(w=>w.DataCzas < DateTime.Now);
@@ -37,7 +45,7 @@ namespace F1_Stats.Controllers
             // last race circuit name
             lastRace.IdToruNavigation = _context.Tors.First(t => t.IdToru == lastRace.IdToru);
 
-            var results = from r in  _context.WynikWyscigus join w in _context.Wydarzenies on r.IdWyscigu equals w.IdTerminarza join s in _context.Sezons on w.IdSezonu equals s.IdSezonu join t in _context.Tors on w.IdToru equals t.IdToru where w.IdTerminarza == lastRace.IdTerminarza orderby r.Pozycja.HasValue descending,r.Pozycja ascending select r;
+            var results = await(from r in  _context.WynikWyscigus join w in _context.Wydarzenies on r.IdWyscigu equals w.IdTerminarza join s in _context.Sezons on w.IdSezonu equals s.IdSezonu join t in _context.Tors on w.IdToru equals t.IdToru where w.IdTerminarza == lastRace.IdTerminarza orderby r.Pozycja.HasValue descending,r.Pozycja ascending select r).ToListAsync();
             var nextRace = _context.Wydarzenies.OrderBy(w=>w.DataCzas).First(w => w.DataCzas > DateTime.Now);
 
             // get a track
@@ -53,6 +61,12 @@ namespace F1_Stats.Controllers
             foreach (WynikWyscigu r in results)
             {
                 r.IdZespoluNavigation = teams.Single(t => t.IdZespolu == r.IdZespolu);
+            }
+
+            // Add a result type
+            foreach (WynikWyscigu r in results)
+            {
+                r.IdRodzajuWynikuNavigation = resultTypes.Single(t => t.IdRodzajuWyniku == r.IdRodzajuWyniku); 
             }
 
             ViewBag.Drivers = drivers;

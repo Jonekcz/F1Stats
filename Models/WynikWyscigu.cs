@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 
 #nullable disable
 
@@ -13,6 +14,8 @@ namespace F1_Stats.Models
         public byte? Punkty { get; set; }
         public byte? Pozycja { get; set; }
         public TimeSpan? Czas { get; set; }
+        [NotMapped]
+        public string ResultType { get; set; }
         public int? IdRodzajuWyniku { get; set; }
         public TimeSpan? NajlepszyCzasOkrazenia { get; set; }
 

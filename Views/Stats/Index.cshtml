@@ -27,7 +27,7 @@
                 <td>@item.IdKierowcyNavigation.Imie</td>
                 <td>@item.IdKierowcyNavigation.Nazwisko</td>
                 <td>@item.IdZespoluNavigation.Nazwa</td>
-                <td>@if(item.Czas != null) @item.Czas.ToString("hh':'mm':'ss':'fff") else @item.Czas</td>
+                <td>@if(item.Czas != null) @item.Czas.ToString("hh':'mm':'ss':'fff") else @item.IdRodzajuWynikuNavigation.Nazwa</td>
                 <td>@item.Punkty</td>
             </tr>
             }
@@ -36,7 +36,7 @@
     </table>
 </section>
 <section id="drivers">
-    <h2>Kierowcy</h2><br />
+    <h2>Kierowcy @DateTime.Now.Year</h2><br />
 
     <p>
         <!-- <a asp-action="Create">Create New</a>-->
