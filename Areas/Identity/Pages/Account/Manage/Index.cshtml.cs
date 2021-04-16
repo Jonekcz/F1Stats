@@ -1,12 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Threading.Tasks;
-using F1_Stats.Models;
+﻿using F1_Stats.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using System.ComponentModel.DataAnnotations;
+using System.Threading.Tasks;
 
 namespace F1_Stats.Areas.Identity.Pages.Account.Manage
 {
@@ -97,12 +94,12 @@ namespace F1_Stats.Areas.Identity.Pages.Account.Manage
             }
             var firstName = user.FirstName;
             var lastName = user.LastName;
-            if(Input.FirstName != firstName)
+            if (Input.FirstName != firstName)
             {
                 user.FirstName = Input.FirstName;
                 await _userManager.UpdateAsync(user);
             }
-            if(Input.LastName != lastName)
+            if (Input.LastName != lastName)
             {
                 user.LastName = Input.LastName;
                 await _userManager.UpdateAsync(user);

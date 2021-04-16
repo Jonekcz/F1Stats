@@ -1,5 +1,3 @@
-using System;
-
 namespace F1_Stats.Models
 {
     public class ErrorViewModel

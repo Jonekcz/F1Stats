@@ -2,9 +2,6 @@
 using Microsoft.Extensions.Options;
 using SendGrid;
 using SendGrid.Helpers.Mail;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace F1_Stats.Services
@@ -18,7 +15,7 @@ namespace F1_Stats.Services
         }
         public Task SendEmailAsync(string email, string subject, string htmlMessage)
         {
-            return Execute(Options.SendGridKey,subject,htmlMessage,email);
+            return Execute(Options.SendGridKey, subject, htmlMessage, email);
         }
 
         private Task Execute(string sendGridKey, string subject, string htmlMessage, string email)

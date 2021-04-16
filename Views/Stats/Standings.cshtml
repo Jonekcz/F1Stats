@@ -1,5 +1,6 @@
 ﻿@{
     ViewData["Title"] = "Klasyfikacja";
+    int i = 1;
 }
 
 <section id="drivers-standings">
@@ -8,6 +9,9 @@
     <table class="table table-striped">
         <thead class="thead-dark">
             <tr>
+                <th scope="col">
+                    Pozycja
+                </th>
                 <th scope="col">
                     Imię
                 </th>
@@ -24,13 +28,16 @@
             {
                 <tr>
                     <td>
-                        @item.Imie
+                        @(i++)
                     </td>
                     <td>
-                        @item.Nazwisko
+                        @item.Name
                     </td>
                     <td>
-                        @item.Punkty
+                        @item.Lastname
+                    </td>
+                    <td>
+                        @item.Points
                     </td>
                 </tr>
             }
@@ -44,6 +51,9 @@
         <thead class="thead-dark">
             <tr>
                 <th scope="col">
+                    Pozycja
+                </th>
+                <th scope="col">
                     Zespół
                 </th>
                 <th scope="col">
@@ -52,16 +62,21 @@
             </tr>
         </thead>
         <tbody>
+            @{i = 1;}
             @foreach (var item in ViewBag.TeamsStandings)
             {
                 <tr>
                     <td>
-                        @item.Nazwa
+                        @(i++)
                     </td>
                     <td>
-                        @item.Punkty
+                        @item.Name
+                    </td>
+                    <td>
+                        @item.Points
                     </td>
                 </tr>
+
             }
         </tbody>
     </table>

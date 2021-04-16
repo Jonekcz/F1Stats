@@ -3,8 +3,8 @@
 }
 <section id="next-race">
     <h2>Następny wyścig</h2>
-    <p style="font-size: 1.3em">@ViewBag.NextRace.IdToruNavigation.Nazwa</p>
-    <p style="font-size: 1.3em">@ViewBag.NextRace.DataCzas</p>
+    <p style="font-size: 1.3em">@ViewBag.NextRace.CircuitIdNavigation.Name</p>
+    <p style="font-size: 1.3em">@ViewBag.NextRace.DateTime</p>
 </section>
 <section id="last-race">
     <h2>@DateTime.Now.Year @ViewBag.LastRaceCircuit</h2><br />
@@ -23,12 +23,12 @@
             @foreach (var item in ViewBag.Results)
             {
             <tr>
-                <td scope="row">@item.Pozycja</td>
-                <td>@item.IdKierowcyNavigation.Imie</td>
-                <td>@item.IdKierowcyNavigation.Nazwisko</td>
-                <td>@item.IdZespoluNavigation.Nazwa</td>
-                <td>@if(item.Czas != null) @item.Czas.ToString("hh':'mm':'ss':'fff") else @item.IdRodzajuWynikuNavigation.Nazwa</td>
-                <td>@item.Punkty</td>
+                <td scope="row">@item.Position</td>
+                <td>@item.DriverIdNavigation.Name</td>
+                <td>@item.DriverIdNavigation.Lastname</td>
+                <td>@item.TeamIdNavigation.Name</td>
+                <td>@if(item.Time != null) @item.Time.ToString("hh':'mm':'ss':'fff") else @item.ResultTypeIdNavigation.Name</td>
+                <td>@item.Points</td>
             </tr>
             }
 
@@ -63,22 +63,22 @@
             {
                 <tr>
                     <td>
-                        @item.Imie
+                        @item.Name
                     </td>
                     <td>
-                        @item.Nazwisko
+                        @item.Lastname
                     </td>
                     <td>
-                        @item.DataUrodzenia.ToShortDateString()
+                        @item.DateOfBirth.ToShortDateString()
                     </td>
                     <td>
-                        @item.IdKrajuNavigation.Nazwa
+                        @item.CountryIdNavigation.Name
                     </td>
                     <!--
                     <td>
-                        <a asp-action="Edit" asp-route-id="@item.IdKierowcy">Edit</a> |
-                        <a asp-action="Details" asp-route-id="@item.IdKierowcy">Details</a> |
-                        <a asp-action="Delete" asp-route-id="@item.IdKierowcy">Delete</a>
+                        <a asp-action="Edit" asp-route-id="@item.DriverId">Edit</a> |
+                        <a asp-action="Details" asp-route-id="@item.DriverId">Details</a> |
+                        <a asp-action="Delete" asp-route-id="@item.DriverId">Delete</a>
                     </td>
                     -->
                 </tr>

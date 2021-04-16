@@ -1,14 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Dynamic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using F1_Stats.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
-using F1_Stats.Models;
-using Microsoft.AspNetCore.Authorization;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace F1_Stats.Controllers
 {
@@ -33,46 +31,45 @@ namespace F1_Stats.Controllers
         {
             int year = DateTime.Now.Year;
 
-            var countries = _context.Krajs;
-            var teams = _context.Zespols;
-            var resultTypes = _context.RodzajWynikus;
-            var drivers = await(from d in _context.Kierowcas join r in _context.WynikWyscigus on d.IdKierowcy equals r.IdKierowcy join w in _context.Wydarzenies on r.IdWyscigu equals w.IdTerminarza join s in _context.Sezons on w.IdSezonu equals s.IdSezonu where s.Rok == year select d).ToListAsync();
-            //drivers = (List<Kierowca>)drivers.Distinct();
+            var countries = await (_context.Krajs.ToListAsync());
+            var teams = await (_context.Zespols.ToListAsync());
+            var resultTypes = await (_context.RodzajWynikus.ToListAsync());
+            var drivers = await (from d in _context.Kierowcas join r in _context.WynikWyscigus on d.DriverId equals r.DriverId join w in _context.Wydarzenies on r.RaceId equals w.EventId join s in _context.Sezons on w.SeasonId equals s.SeasonId where s.Year == year select d).ToListAsync();
 
             // last race
-            var lastRace = _context.Wydarzenies.OrderBy(w=>w.DataCzas).Reverse().First(w=>w.DataCzas < DateTime.Now);
+            var lastRace = _context.Wydarzenies.OrderByDescending(w => w.DateTime).First(w => w.DateTime < DateTime.Now);
 
             // last race circuit name
-            lastRace.IdToruNavigation = _context.Tors.First(t => t.IdToru == lastRace.IdToru);
+            lastRace.CircuitIdNavigation = _context.Tors.First(t => t.CircuitId == lastRace.CircuitId);
 
-            var results = await(from r in  _context.WynikWyscigus join w in _context.Wydarzenies on r.IdWyscigu equals w.IdTerminarza join s in _context.Sezons on w.IdSezonu equals s.IdSezonu join t in _context.Tors on w.IdToru equals t.IdToru where w.IdTerminarza == lastRace.IdTerminarza orderby r.Pozycja.HasValue descending,r.Pozycja ascending select r).ToListAsync();
-            var nextRace = _context.Wydarzenies.OrderBy(w=>w.DataCzas).First(w => w.DataCzas > DateTime.Now);
+            var results = await (from r in _context.WynikWyscigus join w in _context.Wydarzenies on r.RaceId equals w.EventId join s in _context.Sezons on w.SeasonId equals s.SeasonId join t in _context.Tors on w.CircuitId equals t.CircuitId where w.EventId == lastRace.EventId orderby r.Position.HasValue descending, r.Position ascending select r).ToListAsync();
+            var nextRace = _context.Wydarzenies.OrderBy(w => w.DateTime).First(w => w.DateTime > DateTime.Now);
 
             // get a track
-            nextRace.IdToruNavigation = _context.Tors.Single(t => t.IdToru == nextRace.IdToru);
-            
+            nextRace.CircuitIdNavigation = _context.Tors.Single(t => t.CircuitId == nextRace.CircuitId);
+
             // get a country
-            foreach (Kierowca d in drivers)
+            foreach (Driver d in drivers)
             {
-                d.IdKrajuNavigation = countries.Single(c => c.IdKraju == d.IdKraju);
+                d.CountryIdNavigation = countries.Single(c => c.CountryId == d.CountryId);
             }
 
             // get a driver's team
-            foreach (WynikWyscigu r in results)
+            foreach (Result r in results)
             {
-                r.IdZespoluNavigation = teams.Single(t => t.IdZespolu == r.IdZespolu);
+                r.TeamIdNavigation = teams.Single(t => t.TeamId == r.TeamId);
             }
 
             // Add a result type
-            foreach (WynikWyscigu r in results)
+            foreach (Result r in results)
             {
-                r.IdRodzajuWynikuNavigation = resultTypes.Single(t => t.IdRodzajuWyniku == r.IdRodzajuWyniku); 
+                r.ResultTypeIdNavigation = resultTypes.Single(t => t.ResultTypeId == r.ResultTypeId);
             }
 
             ViewBag.Drivers = drivers;
             ViewBag.Results = results;
             ViewBag.NextRace = nextRace;
-            ViewBag.LastRaceCircuit = lastRace.IdToruNavigation.Nazwa;
+            ViewBag.LastRaceCircuit = lastRace.CircuitIdNavigation.Name;
 
             return View();
         }
@@ -81,25 +78,24 @@ namespace F1_Stats.Controllers
         {
             int year = DateTime.Now.Year;
 
-            var teams = from t in _context.Zespols join r in _context.WynikWyscigus on t.IdZespolu equals r.IdZespolu join w in _context.Wydarzenies on r.IdWyscigu equals w.IdTerminarza join s in _context.Sezons on w.IdSezonu equals s.IdSezonu where s.Rok == year select t;
-
-            teams = teams.Distinct();
+            var teams = await (from t in _context.Zespols join r in _context.WynikWyscigus on t.TeamId equals r.TeamId join w in _context.Wydarzenies on r.RaceId equals w.EventId join s in _context.Sezons on w.SeasonId equals s.SeasonId where s.Year == year select t).Distinct().ToListAsync();
 
             // get a country
-            foreach(Zespol t in teams)
+            foreach (Team t in teams)
             {
-                t.IdKrajuNavigation = _context.Krajs.Single(c => c.IdKraju == t.IdKraju);
+                t.CountryIdNavigation = _context.Krajs.Single(c => c.CountryId == t.CountryId);
             }
 
             ViewBag.Teams = teams;
             return View();
         }
 
-        public async Task<IActionResult> Standings(){
+        public async Task<IActionResult> Standings()
+        {
             int year = DateTime.Now.Year;
 
-            var driverStandings = _context.DriversStandings.FromSqlRaw("EXEC dbo.driver_standings @sezon = {0}",year);
-            var teamsStandings = _context.TeamsStandings.FromSqlRaw("EXEC dbo.constructor_standings @sezon = {0}", year);
+            var driverStandings = await (_context.DriversStandings.FromSqlRaw("EXEC dbo.driver_standings @sezon = {0}", year).ToListAsync());
+            var teamsStandings = await (_context.TeamsStandings.FromSqlRaw("EXEC dbo.constructor_standings @sezon = {0}", year).ToListAsync());
 
             ViewBag.DriverStandings = driverStandings;
             ViewBag.TeamsStandings = teamsStandings;
@@ -115,8 +111,8 @@ namespace F1_Stats.Controllers
             }
 
             var kierowca = await _context.Kierowcas
-                .Include(k => k.IdKrajuNavigation)
-                .FirstOrDefaultAsync(m => m.IdKierowcy == id);
+                .Include(k => k.CountryIdNavigation)
+                .FirstOrDefaultAsync(m => m.DriverId == id);
             if (kierowca == null)
             {
                 return NotFound();
@@ -138,7 +134,7 @@ namespace F1_Stats.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind(include:"IdKierowcy,Imie,Nazwisko,IdKraju,DataUrodzenia")] Kierowca kierowca)
+        public async Task<IActionResult> Create([Bind(include: "IdKierowcy,Imie,Nazwisko,IdKraju,DataUrodzenia")] Driver kierowca)
         {
             if (ModelState.IsValid)
             {
@@ -146,7 +142,7 @@ namespace F1_Stats.Controllers
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["IdKraju"] = new SelectList(_context.Krajs, "IdKraju", "Nazwa", kierowca.IdKraju);
+            ViewData["IdKraju"] = new SelectList(_context.Krajs, "IdKraju", "Nazwa", kierowca.CountryId);
             return View(kierowca);
         }
 
@@ -163,7 +159,7 @@ namespace F1_Stats.Controllers
             {
                 return NotFound();
             }
-            ViewData["IdKraju"] = new SelectList(_context.Krajs, "IdKraju", "Nazwa", kierowca.IdKraju);
+            ViewData["IdKraju"] = new SelectList(_context.Krajs, "IdKraju", "Nazwa", kierowca.CountryId);
             return View(kierowca);
         }
 
@@ -172,9 +168,9 @@ namespace F1_Stats.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("IdKierowcy,Imie,Nazwisko,IdKraju,DataUrodzenia")] Kierowca kierowca)
+        public async Task<IActionResult> Edit(int id, [Bind("IdKierowcy,Imie,Nazwisko,IdKraju,DataUrodzenia")] Driver kierowca)
         {
-            if (id != kierowca.IdKierowcy)
+            if (id != kierowca.DriverId)
             {
                 return NotFound();
             }
@@ -188,7 +184,7 @@ namespace F1_Stats.Controllers
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!KierowcaExists(kierowca.IdKierowcy))
+                    if (!KierowcaExists(kierowca.DriverId))
                     {
                         return NotFound();
                     }
@@ -199,7 +195,7 @@ namespace F1_Stats.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["IdKraju"] = new SelectList(_context.Krajs, "IdKraju", "Nazwa", kierowca.IdKraju);
+            ViewData["IdKraju"] = new SelectList(_context.Krajs, "IdKraju", "Nazwa", kierowca.CountryId);
             return View(kierowca);
         }
 
@@ -212,8 +208,8 @@ namespace F1_Stats.Controllers
             }
 
             var kierowca = await _context.Kierowcas
-                .Include(k => k.IdKrajuNavigation)
-                .FirstOrDefaultAsync(m => m.IdKierowcy == id);
+                .Include(k => k.CountryIdNavigation)
+                .FirstOrDefaultAsync(m => m.DriverId == id);
             if (kierowca == null)
             {
                 return NotFound();
@@ -235,7 +231,7 @@ namespace F1_Stats.Controllers
 
         private bool KierowcaExists(int id)
         {
-            return _context.Kierowcas.Any(e => e.IdKierowcy == id);
+            return _context.Kierowcas.Any(e => e.DriverId == id);
         }
     }
 }

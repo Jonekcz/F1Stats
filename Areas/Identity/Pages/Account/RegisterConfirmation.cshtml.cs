@@ -1,12 +1,12 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using System.Text;
-using System.Threading.Tasks;
+﻿using F1_Stats.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.WebUtilities;
-using F1_Stats.Models;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace F1_Stats.Areas.Identity.Pages.Account
 {

@@ -1,4 +1,4 @@
-﻿@model F1_Stats.Models.Kierowca
+﻿@model F1_Stats.Models.Driver
 
 @{
     ViewData["Title"] = "Details";
@@ -11,32 +11,32 @@
     <hr />
     <dl class="row">
         <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Imie)
+            @Html.DisplayNameFor(model => model.Name)
         </dt>
         <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Imie)
+            @Html.DisplayFor(model => model.Name)
         </dd>
         <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Nazwisko)
+            @Html.DisplayNameFor(model => model.Lastname)
         </dt>
         <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Nazwisko)
+            @Html.DisplayFor(model => model.Lastname)
         </dd>
         <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.DataUrodzenia)
+            @Html.DisplayNameFor(model => model.DateOfBirth)
         </dt>
         <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.DataUrodzenia)
+            @Html.DisplayFor(model => model.DateOfBirth)
         </dd>
         <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.IdKrajuNavigation)
+            @Html.DisplayNameFor(model => model.CountryIdNavigation)
         </dt>
         <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.IdKrajuNavigation.Nazwa)
+            @Html.DisplayFor(model => model.CountryIdNavigation.Name)
         </dd>
     </dl>
 </div>
 <div>
-    <a asp-action="Edit" asp-route-id="@Model.IdKierowcy">Edit</a> |
+    <a asp-action="Edit" asp-route-id="@Model.DriverId">Edit</a> |
     <a asp-action="Index">Back to List</a>
 </div>

@@ -1,4 +1,4 @@
-﻿@model F1_Stats.Models.Kierowca
+﻿@model F1_Stats.Models.Driver
 
 @{
     ViewData["Title"] = "Edit";
@@ -12,26 +12,26 @@
     <div class="col-md-4">
         <form asp-action="Edit">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <input type="hidden" asp-for="IdKierowcy" />
+            <input type="hidden" asp-for="DriverId" />
             <div class="form-group">
-                <label asp-for="Imie" class="control-label"></label>
-                <input asp-for="Imie" class="form-control" />
-                <span asp-validation-for="Imie" class="text-danger"></span>
+                <label asp-for="Name" class="control-label"></label>
+                <input asp-for="Name" class="form-control" />
+                <span asp-validation-for="Name" class="text-danger"></span>
             </div>
             <div class="form-group">
-                <label asp-for="Nazwisko" class="control-label"></label>
-                <input asp-for="Nazwisko" class="form-control" />
-                <span asp-validation-for="Nazwisko" class="text-danger"></span>
+                <label asp-for="Lastname" class="control-label"></label>
+                <input asp-for="Lastname" class="form-control" />
+                <span asp-validation-for="Lastname" class="text-danger"></span>
             </div>
             <div class="form-group">
-                <label asp-for="IdKraju" class="control-label"></label>
-                <select asp-for="IdKraju" class="form-control" asp-items="ViewBag.IdKraju"></select>
-                <span asp-validation-for="IdKraju" class="text-danger"></span>
+                <label asp-for="CountryId" class="control-label"></label>
+                <select asp-for="CountryId" class="form-control" asp-items="ViewBag.IdKraju"></select>
+                <span asp-validation-for="CountryId" class="text-danger"></span>
             </div>
             <div class="form-group">
-                <label asp-for="DataUrodzenia" class="control-label"></label>
-                <input asp-for="DataUrodzenia" class="form-control" />
-                <span asp-validation-for="DataUrodzenia" class="text-danger"></span>
+                <label asp-for="DateOfBirth" class="control-label"></label>
+                <input asp-for="DateOfBirth" class="form-control" />
+                <span asp-validation-for="DateOfBirth" class="text-danger"></span>
             </div>
             <div class="form-group">
                 <input type="submit" value="Save" class="btn btn-primary" />
