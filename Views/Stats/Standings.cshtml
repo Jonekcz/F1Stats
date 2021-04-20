@@ -1,25 +1,26 @@
-﻿@{
-    ViewData["Title"] = "Klasyfikacja";
+﻿@inject Microsoft.AspNetCore.Mvc.Localization.IViewLocalizer localizer;
+@{
+    ViewData["Title"] = localizer["Standings"];
     int i = 1;
 }
 
 <section id="drivers-standings">
-    <h2>Klasyfikacja generalna</h2><br />
+    <h2>@localizer["Driver standings"]</h2><br />
 
     <table class="table table-striped">
         <thead class="thead-dark">
             <tr>
                 <th scope="col">
-                    Pozycja
+                    @localizer["Position"]
                 </th>
                 <th scope="col">
-                    Imię
+                    @localizer["Name"]
                 </th>
                 <th scope="col">
-                    Nazwisko
+                    @localizer["Last name"]
                 </th>
                 <th scope="col">
-                    Punkty
+                    @localizer["Points"]
                 </th>
             </tr>
         </thead>
@@ -45,19 +46,19 @@
     </table>
 </section>
 <section id="teams-standings">
-    <h2>Klasyfikacja konstruktorów</h2><br />
+    <h2>@localizer["Constructor standings"]</h2><br />
 
     <table class="table table-striped">
         <thead class="thead-dark">
             <tr>
                 <th scope="col">
-                    Pozycja
+                    @localizer["Position"]
                 </th>
                 <th scope="col">
-                    Zespół
+                    @localizer["Team"]
                 </th>
                 <th scope="col">
-                    Punkty
+                    @localizer["Points"]
                 </th>
             </tr>
         </thead>

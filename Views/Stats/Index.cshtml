@@ -1,8 +1,9 @@
-﻿@{
-    ViewData["Title"] = "Wyniki wyścigów, następny wyścig";
+﻿@inject Microsoft.AspNetCore.Mvc.Localization.IViewLocalizer localizer
+@{
+    ViewData["Title"] = localizer["IndexTitle"];
 }
 <section id="next-race">
-    <h2>Następny wyścig</h2>
+    <h2>@localizer["NextRace"]</h2>
     <p style="font-size: 1.3em">@ViewBag.NextRace.CircuitIdNavigation.Name</p>
     <p style="font-size: 1.3em">@ViewBag.NextRace.DateTime</p>
 </section>
@@ -11,12 +12,11 @@
     <table class="table table-striped">
         <thead class="thead-dark">
             <tr>
-                <th scope="col">Pozycja</th>
-                <th scope="col">Imię</th>
-                <th scope="col">Nazwisko</th>
-                <th scope="col">Zespół</th>
-                <th scope="col">Czas</th>
-                <th scope="col">Punkty</th>
+                <th scope="col">@localizer["Position"]</th>
+                <th scope="col">@localizer["Driver"]</th>
+                <th scope="col">@localizer["Team"]</th>
+                <th scope="col">@localizer["Time"]</th>
+                <th scope="col">@localizer["Points"]</th>
             </tr>
         </thead>
         <tbody>
@@ -24,8 +24,7 @@
             {
             <tr>
                 <td scope="row">@item.Position</td>
-                <td>@item.DriverIdNavigation.Name</td>
-                <td>@item.DriverIdNavigation.Lastname</td>
+                <td>@item.DriverIdNavigation.Name @item.DriverIdNavigation.Lastname</td>
                 <td>@item.TeamIdNavigation.Name</td>
                 <td>@if(item.Time != null) @item.Time.ToString("hh':'mm':'ss':'fff") else @item.ResultTypeIdNavigation.Name</td>
                 <td>@item.Points</td>
@@ -36,7 +35,7 @@
     </table>
 </section>
 <section id="drivers">
-    <h2>Kierowcy @DateTime.Now.Year</h2><br />
+    <h2>@DateTime.Now.Year @localizer["Drivers"]</h2><br />
 
     <p>
         <!-- <a asp-action="Create">Create New</a>-->
@@ -45,16 +44,16 @@
         <thead>
             <tr>
                 <th scope="col">
-                    Imię
+                    @localizer["Name"]
                 </th>
                 <th scope="col">
-                    Nazwisko
+                    @localizer["Surname"]
                 </th>
                 <th scope="col">
-                    Data urodzenia
+                    @localizer["Date of birth"]
                 </th>
                 <th scope="col">
-                    Kraj
+                    @localizer["Country"]
                 </th>
             </tr>
         </thead>

@@ -65,7 +65,6 @@ namespace F1_Stats.Controllers
             {
                 r.ResultTypeIdNavigation = resultTypes.Single(t => t.ResultTypeId == r.ResultTypeId);
             }
-
             ViewBag.Drivers = drivers;
             ViewBag.Results = results;
             ViewBag.NextRace = nextRace;

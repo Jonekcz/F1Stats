@@ -1,21 +1,22 @@
-﻿@{
-    ViewData["Title"] = "Zespoły";
+﻿@inject Microsoft.AspNetCore.Mvc.Localization.IViewLocalizer localizer
+@{
+    ViewData["Title"] = localizer["Teams"];
 }
 
 <section id="teams">
-    <h2>Zespoły</h2><br />
+    <h2>@localizer["Teams"]</h2><br />
 
     <table class="table">
         <thead>
             <tr>
                 <th scope="col">
-                    Nazwa
+                    @localizer["Name"]
                 </th>
                 <th scope="col">
-                    Kraj
+                    @localizer["Country"]
                 </th>
                 <th scope="col">
-                    Dostawca silnika
+                    @localizer["Engine supplier"]
                 </th>
             </tr>
         </thead>

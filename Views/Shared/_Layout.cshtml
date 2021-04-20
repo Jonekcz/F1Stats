@@ -1,5 +1,6 @@
 ﻿@using Microsoft.AspNetCore.Identity
 @inject SignInManager<ApplicationUser> SignInManager
+@inject Microsoft.AspNetCore.Mvc.Localization.IViewLocalizer localizer;
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -24,15 +25,15 @@
                             <a class="nav-link text-dark" asp-area="" asp-controller="Stats" asp-action="Index">Home</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Stats" asp-action="Teams">Zespoły</a>
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Stats" asp-action="Teams">@localizer["Teams"]</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Stats" asp-action="Standings">Klasyfikacja</a>
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Stats" asp-action="Standings">@localizer["Standings"]</a>
                         </li>
                         @if (SignInManager.IsSignedIn(User)) 
                         {
                         <li class="nav-item">
-                            <a class="nav-link text-success" asp-area="" asp-controller="Stats" asp-action="Create">Dodaj</a>
+                            <a class="nav-link text-success" asp-area="" asp-controller="Stats" asp-action="Create">@localizer["Edit"]</a>
                         </li>
                         }
                     </ul>
@@ -49,10 +50,10 @@
 
     <footer class="border-top text-muted">
         <div class="container" style="padding: 10px 0;">
-            &copy; 2021 - F1 Stats <a asp-area="" asp-controller="Stats" asp-action="Teams">Zespoły</a>
-            <a asp-area="" asp-controller="Stats" asp-action="Standings">Klasyfikacja</a>
+            &copy; 2021 - F1 Stats <a asp-area="" asp-controller="Stats" asp-action="Teams">@localizer["Teams"]</a>
+            <a asp-area="" asp-controller="Stats" asp-action="Standings">@localizer["Standings"]</a>
         </div>
-        <div class="container"><span>Wykorzystano bazę <a href="http://ergast.com/mrd/"> Ergast</a></span></div>
+        <div class="container"><span>@localizer["Ergast"] <a href="http://ergast.com/mrd/"> Ergast</a></span></div>
     </footer>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
