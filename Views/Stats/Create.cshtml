@@ -1,15 +1,22 @@
-﻿@model F1_Stats.Models.Driver
-
+﻿@using System.Reflection 
 @{
     ViewData["Title"] = "Create";
 }
 
 <h1>Dodaj</h1>
 
-<h4>Kierowca</h4>
 <hr />
 <div class="row">
     <div class="col-md-4">
+        <form asp-action="ChooseTable">
+            <div class="form-group">
+                <label name="TableName" class="control-label">Choose a table</label>
+                <select name="TableName" class="form-control" asp-items="ViewBag.Tables"></select>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Choose" class="btn btn-primary" />
+            </div>
+        </form><!--
         <form asp-action="Create">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <div class="form-group">
@@ -33,6 +40,28 @@
             </div>
             <div class="form-group">
                 <input type="submit" value="Create" class="btn btn-primary" />
+            </div>
+        </form>
+                   -->
+    </div>
+</div>
+<div class="row">
+        <form asp-action="Index">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            @foreach (var item in Model)
+            {
+            <div class="form-group">
+                @foreach (PropertyInfo prop in item.GetType().GetProperties()) {
+                var propValue = prop.GetValue(item);
+
+                <label asp-for="@prop.Name" class="control-label"></label>
+                <input asp-for="@propValue" class="@prop.Name" class="form-control" />
+                <span asp-validation-for="@prop.Name" class="text-danger"></span>
+                }
+            </div>
+            }
+            <div class="form-group">
+                <input type="submit" value="Update" class="btn btn-primary" />
             </div>
         </form>
     </div>

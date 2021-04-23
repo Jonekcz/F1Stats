@@ -308,7 +308,7 @@ namespace F1_Stats.Models
                 entity.ToTable("Wynik_kwalifikacji");
 
                 entity.Property(e => e.QualifyingId).HasColumnName("id_kwalifikacji");
-                
+
                 entity.Property(e => e.DriverId).HasColumnName("id_kierowcy");
 
                 entity.Property(e => e.Q1Time)

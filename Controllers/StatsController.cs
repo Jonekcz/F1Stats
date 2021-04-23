@@ -3,10 +3,15 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
+using static F1_Stats.JSON.Qualifying;
 
 namespace F1_Stats.Controllers
 {
@@ -49,7 +54,7 @@ namespace F1_Stats.Controllers
             nextRace.CircuitIdNavigation = _context.Tors.Single(t => t.CircuitId == nextRace.CircuitId);
 
             // get a country
-            foreach (Driver d in drivers)
+            foreach (Models.Driver d in drivers)
             {
                 d.CountryIdNavigation = countries.Single(c => c.CountryId == d.CountryId);
             }
@@ -101,6 +106,35 @@ namespace F1_Stats.Controllers
             return View();
         }
 
+        public async Task<IActionResult> Update()
+        {
+            int year = DateTime.Now.Year;
+            int round = 1;
+
+            using (var command = _context.Database.GetDbConnection().CreateCommand())
+            {
+                command.CommandText = "SELECT TOP 1 rok,round FROM (SELECT Wydarzenie.id_terminarza,Sezon.rok,ROW_NUMBER() OVER(ORDER BY Wydarzenie.data_czas) \"round\",Wydarzenie.data_czas FROM Wydarzenie INNER JOIN Sezon ON Sezon.id_sezonu = Wydarzenie.id_sezonu WHERE  Sezon.rok = YEAR(GETDATE())) races INNER JOIN Wynik_kwalifikacji ON id_terminarza = Wynik_kwalifikacji.id_kwalifikacji WHERE data_czas < GETDATE() ORDER BY data_czas DESC;";
+                _context.Database.OpenConnection();
+                // last race whose results are available in db
+                using var result = await command.ExecuteReaderAsync();
+                while (result.Read())
+                {
+                    year = result.GetInt16(0);
+                    // long to int
+                    round = (int)result.GetInt64(1);
+                }
+            }
+
+            // get data from ergast
+            // qualifying
+            string url = $"http://ergast.com/api/f1/{year}/{round + 1}/qualifying.json";
+            WebClient webClient = new WebClient();
+            // json
+            string data = webClient.DownloadString(new Uri(url));
+            Rootobject rootobject = JsonConvert.DeserializeObject<Rootobject>(data);
+            return RedirectToAction("Index");
+        }
+
         // GET: Stats/Details/5
         public async Task<IActionResult> Details(int? id)
         {
@@ -124,16 +158,68 @@ namespace F1_Stats.Controllers
         [Authorize]
         public IActionResult Create()
         {
-            ViewData["IdKraju"] = new SelectList(_context.Krajs, "IdKraju", "Nazwa");
-            return View();
+            // current language
+            string lang = CultureInfo.CurrentCulture.Name;
+            var entities = _context.Model.GetEntityTypes();
+            List<string> tableNames = new List<string>();
+            foreach (var entity in entities)
+            {
+                if (lang == "pl")
+                    tableNames.Add(entity.GetAnnotation("Relational:TableName").Value.ToString());
+                if (lang == "en")
+                    tableNames.Add(entity.ClrType.Name);
+            }
+            //ViewData["IdKraju"] = new SelectList(_context.Krajs, "IdKraju", "Nazwa");
+            string tableName = tableNames[0];
+            ViewData["Tables"] = new SelectList(tableNames);
+            var entityType = entities.First();
+            foreach (var entity in entities)
+            {
+                if (lang == "pl")
+                    if (entity.GetAnnotation("Relational:TableName").Value.ToString().Equals(tableName))
+                    {
+                        entityType = entity;
+                    }
+                if (lang == "en")
+                    if (entity.ClrType.Name.Equals(tableName))
+                    {
+                        entityType = entity;
+                    }
+            }
+            var dynamicTable = _context.Query(entityType.ClrType.FullName);
+            return View(dynamicTable);
+        }
+
+        [Authorize]
+        [HttpPost]
+        public IActionResult ChooseTable(string tableName)
+        {
+            string lang = CultureInfo.CurrentCulture.Name;
+            var entities = _context.Model.GetEntityTypes();
+            var entityType = entities.First();
+            foreach (var entity in entities)
+            {
+                if (lang == "pl")
+                    if (entity.GetAnnotation("Relational:TableName").Value.ToString().Equals(tableName))
+                    {
+                        entityType = entity;
+                    }
+                if (lang == "en")
+                    if (entity.ClrType.Name.Equals(tableName))
+                    {
+                        entityType = entity;
+                    }
+            }
+            var dynamicTable = _context.Query(entityType.ClrType.FullName);
+            return View("~/Views/Stats/Create.cshtml", dynamicTable);
         }
 
         // POST: Stats/Create
         // To protect from overposting attacks, enable the specific properties you want to bind to.
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
+        /*[HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind(include: "IdKierowcy,Imie,Nazwisko,IdKraju,DataUrodzenia")] Driver kierowca)
+        public async Task<IActionResult> Create([Bind(include: "IdKierowcy,Imie,Nazwisko,IdKraju,DataUrodzenia")] Models.Driver kierowca)
         {
             if (ModelState.IsValid)
             {
@@ -143,7 +229,7 @@ namespace F1_Stats.Controllers
             }
             ViewData["IdKraju"] = new SelectList(_context.Krajs, "IdKraju", "Nazwa", kierowca.CountryId);
             return View(kierowca);
-        }
+        }*/
 
         // GET: Stats/Edit/5
         public async Task<IActionResult> Edit(int? id)
@@ -167,7 +253,7 @@ namespace F1_Stats.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("IdKierowcy,Imie,Nazwisko,IdKraju,DataUrodzenia")] Driver kierowca)
+        public async Task<IActionResult> Edit(int id, [Bind("IdKierowcy,Imie,Nazwisko,IdKraju,DataUrodzenia")] Models.Driver kierowca)
         {
             if (id != kierowca.DriverId)
             {

@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace F1_Stats.Models
 {
     [Keyless]
+    [Table("Klasyfikacja konstruktorów")]
     public class TeamStandings
     {
         [Column("Nazwa")]

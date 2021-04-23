@@ -15,10 +15,10 @@ namespace F1_Stats.Models
         public int DriverId { get; set; }
         [Column("IdZespolu")]
         public int? TeamId { get; set; }
-        [Display(Name ="Points")]
+        [Display(Name = "Points")]
         [Column("Punkty")]
         public byte? Points { get; set; }
-        [Display(Name="Position")]
+        [Display(Name = "Position")]
         [Column("Pozycja")]
         public byte? Position { get; set; }
         [Column("Czas")]
