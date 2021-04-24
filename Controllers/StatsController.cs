@@ -186,7 +186,9 @@ namespace F1_Stats.Controllers
                         entityType = entity;
                     }
             }
-            var dynamicTable = _context.Query(entityType.ClrType.FullName);
+            //var dynamicTable = _context.Query(entityType.ClrType.FullName);
+            var dynamicTable = _context.Set(tableName);
+            ViewBag.TableName = tableName;
             return View(dynamicTable);
         }
 
@@ -210,8 +212,17 @@ namespace F1_Stats.Controllers
                         entityType = entity;
                     }
             }
-            var dynamicTable = _context.Query(entityType.ClrType.FullName);
+            //var dynamicTable = _context.Query(entityType.ClrType.FullName);
+            var dynamicTable = _context.Set(tableName);
+            ViewBag.TableName = tableName;
             return View("~/Views/Stats/Create.cshtml", dynamicTable);
+        }
+
+        [Authorize]
+        [HttpPost]
+        public async Task<IActionResult> Create(string tableName)
+        {
+            return RedirectToAction("Index");
         }
 
         // POST: Stats/Create

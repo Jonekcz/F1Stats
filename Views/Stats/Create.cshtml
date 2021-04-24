@@ -46,25 +46,39 @@
     </div>
 </div>
 <div class="row">
-        <form asp-action="Index">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            @foreach (var item in Model)
-            {
-            <div class="form-group">
-                @foreach (PropertyInfo prop in item.GetType().GetProperties()) {
-                var propValue = prop.GetValue(item);
-
-                <label asp-for="@prop.Name" class="control-label"></label>
-                <input asp-for="@propValue" class="@prop.Name" class="form-control" />
-                <span asp-validation-for="@prop.Name" class="text-danger"></span>
+    <form asp-action="Create">
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        @{int i = 0; }
+        @foreach (var item in Model)
+        {
+            <div class="input-group mb-4">
+                @foreach (PropertyInfo prop in item.GetType().GetProperties())
+                {
+                    <div class="col-md-3">
+                        @{
+                            var propValue = prop.GetValue(item);
+                            var propName = prop.Name;
+                        }
+                        <label name="@(propName)[@i]" class="control-label">@propName</label>
+                        <input name="@(propName)[@i]" value="@propValue" class="form-control" />
+                        <!--<span asp-validation-for="@propName" class="text-danger"></span>-->
+                    </div>
                 }
+                @{i++;}
             </div>
-            }
-            <div class="form-group">
+        }
+        <div class="input-group mb-4">
+            <div class="col-md-3">
+                <label name="tableName" class="control-label">Table name</label>
+                <input name="tableName" value="@ViewBag.TableName" class="form-control" />
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="col-md-3">
                 <input type="submit" value="Update" class="btn btn-primary" />
             </div>
-        </form>
-    </div>
+        </div>
+    </form>   
 </div>
 
 <div>
