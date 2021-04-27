@@ -4,12 +4,16 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.Extensions.Primitives;
 using Newtonsoft.Json;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Net;
+using System.Reflection;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using static F1_Stats.JSON.Qualifying;
 
@@ -106,6 +110,7 @@ namespace F1_Stats.Controllers
             return View();
         }
 
+        [Authorize]
         public async Task<IActionResult> Update()
         {
             int year = DateTime.Now.Year;
@@ -156,6 +161,7 @@ namespace F1_Stats.Controllers
 
         // GET: Stats/Create
         [Authorize]
+        [HttpGet]
         public IActionResult Create()
         {
             // current language
@@ -179,6 +185,7 @@ namespace F1_Stats.Controllers
                     if (entity.GetAnnotation("Relational:TableName").Value.ToString().Equals(tableName))
                     {
                         entityType = entity;
+                        tableName = entity.ClrType.Name;
                     }
                 if (lang == "en")
                     if (entity.ClrType.Name.Equals(tableName))
@@ -186,9 +193,8 @@ namespace F1_Stats.Controllers
                         entityType = entity;
                     }
             }
-            //var dynamicTable = _context.Query(entityType.ClrType.FullName);
             var dynamicTable = _context.Set(tableName);
-            ViewBag.TableName = tableName;
+            ViewBag.TableName = entityType.ClrType.FullName;
             return View(dynamicTable);
         }
 
@@ -196,6 +202,7 @@ namespace F1_Stats.Controllers
         [HttpPost]
         public IActionResult ChooseTable(string tableName)
         {
+            string tableClassName = tableName;
             string lang = CultureInfo.CurrentCulture.Name;
             var entities = _context.Model.GetEntityTypes();
             var entityType = entities.First();
@@ -205,24 +212,93 @@ namespace F1_Stats.Controllers
                     if (entity.GetAnnotation("Relational:TableName").Value.ToString().Equals(tableName))
                     {
                         entityType = entity;
+                        tableClassName = entity.ClrType.Name;
                     }
                 if (lang == "en")
                     if (entity.ClrType.Name.Equals(tableName))
                     {
                         entityType = entity;
+
                     }
             }
-            //var dynamicTable = _context.Query(entityType.ClrType.FullName);
-            var dynamicTable = _context.Set(tableName);
-            ViewBag.TableName = tableName;
+
+            // db records
+            var dynamicTable = _context.Set(tableClassName);
+
+            // select list
+            List<string> tableNames = new();
+            foreach (var entity in entities)
+            {
+                if (lang == "pl")
+                    tableNames.Add(entity.GetAnnotation("Relational:TableName").Value.ToString());
+                if (lang == "en")
+                    tableNames.Add(entity.ClrType.Name);
+            }
+            ViewData["Tables"] = new SelectList(tableNames, tableName);
+            ViewBag.TableName = entityType.ClrType.FullName;
             return View("~/Views/Stats/Create.cshtml", dynamicTable);
+            //return Json(dynamicTable);
         }
 
         [Authorize]
         [HttpPost]
         public async Task<IActionResult> Create(string tableName)
         {
-            return RedirectToAction("Index");
+            // db table class type
+            Type objectType = Type.GetType(tableName);
+            // list of objects of a 'tableName' class
+            Type listType = typeof(List<>).MakeGenericType( objectType);
+            // list of records
+            var list = Activator.CreateInstance(listType);
+            // single record
+            var singleRecord = Activator.CreateInstance(objectType);
+
+            // entity properties
+            PropertyInfo[] properties = singleRecord.GetType().GetProperties();
+            // properties names
+            String[] propertyNames = new string[properties.Length];
+            for (var i = 0; i < propertyNames.Length; i++)
+            {
+                propertyNames[i] = properties[i].Name;
+            }
+            int recordsCount = (from key in Request.Form.Keys let value = Regex.Match(key, @"\d+").Value select Convert.ToInt32(value == string.Empty ? "0" : Regex.Match(key, @"\d+").Value) + 1).Concat(new[] { 0 }).Max();
+            // row number
+            int counter = 0;
+            while (counter < recordsCount)
+            {
+                var record = Activator.CreateInstance(objectType);
+                foreach (string propertyName in propertyNames)
+                {
+                    if (Request.Form.ContainsKey($"{propertyName}[{counter}]"))
+                    {
+                        record.GetType().GetProperty(propertyName).SetValue(record, CastItem(Request.Form[$"{propertyName}[{counter}]"].ToString(), record, propertyName));
+                    }
+                }
+                list.GetType().GetMethod("Add").Invoke(list, new object[] { record });
+                counter++;
+            }
+
+            // update database
+            _context.UpdateRange(((IList)list)[0]);
+            await _context.SaveChangesAsync();
+            ViewBag.Message = "Zaaktualizowano pomyślnie";
+            return RedirectToAction("Create");
+        }
+
+        private object CastItem(string item, object record, string currentProperty)
+        {
+            Type type = record.GetType().GetProperty(currentProperty).PropertyType;
+            if (type == typeof(string))
+                return item;
+            if (type == typeof(int))
+                return int.Parse(item);
+            if (type == typeof(decimal) || type == typeof(decimal?))
+                return decimal.Parse(item);
+            if (type == typeof(float))
+                return float.Parse(item);
+            if (type == typeof(DateTime))
+                return DateTime.Parse(item);
+            return null;
         }
 
         // POST: Stats/Create

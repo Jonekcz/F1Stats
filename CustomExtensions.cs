@@ -1,28 +1,30 @@
-﻿using Microsoft.EntityFrameworkCore.Internal;
+﻿using F1_Stats.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using F1_Stats.Models;
 
 namespace Microsoft.EntityFrameworkCore
 {
-    /*public static partial class CustomExtensions
-    {
-        public static IQueryable Query(this DbContext context, string entityName) =>
-            context.Query(context.Model.FindEntityType(entityName).ClrType);
-
-        public static IQueryable Query(this DbContext context, Type entityType) =>
-            (IQueryable)((IDbSetCache)context).GetOrAddSet(context.GetDependencies().SetSource, entityType);
-    }*/
 
     public static class CustomExtensions
     {
         static Dictionary<string, Type> TableTypeDictionary = new Dictionary<string, Type>()
     {
-          { "Driver", typeof(Driver) },//store the tables name and type.
+         //store the tables name and type.
           { "Circuit", typeof(Circuit) },
-          { "Country", typeof(Country) }
-          //...
+          { "Country", typeof(Country) },
+          { "Continent", typeof(Continent) },
+           { "Driver", typeof(Driver) },
+          { "DriverStandings", typeof(DriverStandings) },
+          { "Event", typeof(Event) },
+          { "LapTime", typeof(LapTime) },
+          { "Pitstop", typeof(Pitstop) },
+          { "QualifyingResult", typeof(QualifyingResult) },
+          { "Result", typeof(Result) },
+          { "ResultType", typeof(ResultType) },
+          { "Season", typeof(Season) },
+          { "Team", typeof(Team) },
+          { "TeamStandings", typeof(TeamStandings) },
     };
 
         public static IQueryable<Object> Set(this DbContext _context, Type t)
