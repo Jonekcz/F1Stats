@@ -22,7 +22,6 @@ namespace F1_Stats.Controllers
     public class StatsController : Controller
     {
         private readonly F1Context _context;
-
         public StatsController(F1Context context)
         {
             _context = context;
@@ -162,39 +161,20 @@ namespace F1_Stats.Controllers
         // GET: Stats/Create
         [Authorize]
         [HttpGet]
-        public IActionResult Create()
+        [Route("/Stats/Create/{page:int}")]
+        [Route("/Stats/Create")]
+        public IActionResult Create(int page = 1)
         {
-            // current language
-            string lang = CultureInfo.CurrentCulture.Name;
-            var entities = _context.Model.GetEntityTypes();
-            List<string> tableNames = new List<string>();
-            foreach (var entity in entities)
-            {
-                if (lang == "pl")
-                    tableNames.Add(entity.GetAnnotation("Relational:TableName").Value.ToString());
-                if (lang == "en")
-                    tableNames.Add(entity.ClrType.Name);
-            }
-            //ViewData["IdKraju"] = new SelectList(_context.Krajs, "IdKraju", "Nazwa");
-            string tableName = tableNames[0];
-            ViewData["Tables"] = new SelectList(tableNames);
-            var entityType = entities.First();
-            foreach (var entity in entities)
-            {
-                if (lang == "pl")
-                    if (entity.GetAnnotation("Relational:TableName").Value.ToString().Equals(tableName))
-                    {
-                        entityType = entity;
-                        tableName = entity.ClrType.Name;
-                    }
-                if (lang == "en")
-                    if (entity.ClrType.Name.Equals(tableName))
-                    {
-                        entityType = entity;
-                    }
-            }
-            var dynamicTable = _context.Set(tableName);
-            ViewBag.TableName = entityType.ClrType.FullName;
+            const int pageSize = 50;
+            int count = _context.Set(TableNames("")).Count();
+            int maxPage = ((count / pageSize) - (count % pageSize == 0 ? 1 : 0))+1;
+            page = page > maxPage ? maxPage : page;
+            var dynamicTable = _context.Set(TableNames("")).Skip((page-1) * pageSize).Take(pageSize);
+            
+            ViewBag.MaxPage = maxPage;
+            ViewBag.Page = page;
+            if (TempData.ContainsKey("Message"))
+                ViewData["Message"] = TempData["Message"];
             return View(dynamicTable);
         }
 
@@ -202,50 +182,22 @@ namespace F1_Stats.Controllers
         [HttpPost]
         public IActionResult ChooseTable(string tableName)
         {
-            string tableClassName = tableName;
-            string lang = CultureInfo.CurrentCulture.Name;
-            var entities = _context.Model.GetEntityTypes();
-            var entityType = entities.First();
-            foreach (var entity in entities)
-            {
-                if (lang == "pl")
-                    if (entity.GetAnnotation("Relational:TableName").Value.ToString().Equals(tableName))
-                    {
-                        entityType = entity;
-                        tableClassName = entity.ClrType.Name;
-                    }
-                if (lang == "en")
-                    if (entity.ClrType.Name.Equals(tableName))
-                    {
-                        entityType = entity;
-
-                    }
-            }
-
+            TempData["TableName"] = tableName;
             // db records
-            var dynamicTable = _context.Set(tableClassName);
-
-            // select list
-            List<string> tableNames = new();
-            foreach (var entity in entities)
-            {
-                if (lang == "pl")
-                    tableNames.Add(entity.GetAnnotation("Relational:TableName").Value.ToString());
-                if (lang == "en")
-                    tableNames.Add(entity.ClrType.Name);
-            }
-            ViewData["Tables"] = new SelectList(tableNames, tableName);
-            ViewBag.TableName = entityType.ClrType.FullName;
-            return View("~/Views/Stats/Create.cshtml", dynamicTable);
-            //return Json(dynamicTable);
+            var dynamicTable = _context.Set(TableNames(tableName));
+            //return View("~/Views/Stats/Create.cshtml", dynamicTable);
+            return Json(dynamicTable);
         }
 
         [Authorize]
         [HttpPost]
-        public async Task<IActionResult> Create(string tableName)
+        [ActionName("Create")]
+        public async Task<IActionResult> CreatePost()
         {
+            string currentTableClass = (string)TempData["currentTableClass"];
             // db table class type
-            Type objectType = Type.GetType(tableName);
+            Type objectType = Type.GetType(currentTableClass);
+            TempData["currentTableClass"] = currentTableClass;
             // list of objects of a 'tableName' class
             Type listType = typeof(List<>).MakeGenericType( objectType);
             // list of records
@@ -281,7 +233,7 @@ namespace F1_Stats.Controllers
             // update database
             _context.UpdateRange(((IList)list)[0]);
             await _context.SaveChangesAsync();
-            ViewBag.Message = "Zaaktualizowano pomyślnie";
+            TempData["Message"] = "Zaaktualizowano pomyślnie";
             return RedirectToAction("Create");
         }
 
@@ -293,13 +245,56 @@ namespace F1_Stats.Controllers
             if (type == typeof(int))
                 return int.Parse(item);
             if (type == typeof(decimal) || type == typeof(decimal?))
-                return decimal.Parse(item);
+                return decimal.Parse(item,CultureInfo.CurrentCulture);
             if (type == typeof(float))
                 return float.Parse(item);
             if (type == typeof(DateTime))
                 return DateTime.Parse(item);
             return null;
         }
+
+        // get db table names, pass them to the select list, get the current selected table
+        private String TableNames(string currentTable)
+        {
+            // current language
+            string lang = CultureInfo.CurrentCulture.Name;
+            var entities = _context.Model.GetEntityTypes();
+            List<string> tableNames = new List<string>();
+            foreach (var entity in entities)
+            {
+                if (lang == "pl")
+                    tableNames.Add(entity.GetAnnotation("Relational:TableName").Value.ToString());
+                if (lang == "en")
+                    tableNames.Add(entity.ClrType.Name);
+            }
+            if (currentTable.Equals(""))
+                currentTable = tableNames[0];
+
+            ViewData["Tables"] = new SelectList(tableNames, TempData.ContainsKey("TableName") ? TempData["TableName"] : currentTable);
+            TempData["TableName"] = currentTable;
+
+            var entityType = entities.First();
+            foreach (var entity in entities)
+            {
+                if (lang == "pl")
+                    if (entity.GetAnnotation("Relational:TableName").Value.ToString().Equals(currentTable))
+                    {
+                        entityType = entity;
+                        currentTable = entity.ClrType.Name;
+                        break;
+                    }
+                if (lang == "en")
+                    if (entity.ClrType.Name.Equals(currentTable))
+                    {
+                        entityType = entity;
+                        break;
+                    }
+            }
+            TempData["currentTableClass"] = entityType.ClrType.FullName;
+            // table name e.g Driver
+            return currentTable;
+        }
+
 
         // POST: Stats/Create
         // To protect from overposting attacks, enable the specific properties you want to bind to.

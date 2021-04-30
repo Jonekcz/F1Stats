@@ -12,9 +12,10 @@ namespace Microsoft.EntityFrameworkCore
     {
          //store the tables name and type.
           { "Circuit", typeof(Circuit) },
-          { "Country", typeof(Country) },
+          { "City", typeof(City) },
           { "Continent", typeof(Continent) },
-           { "Driver", typeof(Driver) },
+          { "Country", typeof(Country) },
+          { "Driver", typeof(Driver) },
           { "DriverStandings", typeof(DriverStandings) },
           { "Event", typeof(Event) },
           { "LapTime", typeof(LapTime) },

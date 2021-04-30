@@ -3,15 +3,21 @@
     ViewData["Title"] = "Create";
 }
 
+
 <h1>Dodaj</h1>
 
-<hr />
 <div class="row">
     <div class="col-md-4">
-        <form asp-action="ChooseTable">
+        @if (ViewData.ContainsKey("Message")) { 
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @ViewData["Message"]
+            <button type="button" class="close" data-bs-dismiss="alert" aria-label="Close"><span aria-hidden="true">×</span></button>
+        </div>
+        }
+        <form asp-action="ChooseTable" id="choose-table">
             <div class="form-group">
-                <label name="TableName" class="control-label">Choose a table</label>
-                <select name="TableName" class="form-control" asp-items="ViewBag.Tables"></select>
+                <label for="TableName" class="control-label">Choose a table</label>
+                <select name="TableName" class="form-control" id="table-name" asp-items="ViewBag.Tables"></select>
             </div>
             <div class="form-group">
                 <input type="submit" value="Choose" class="btn btn-primary" />
@@ -20,7 +26,7 @@
     </div>
 </div>
 <div class="row">
-    <form asp-action="Create">
+    <form asp-action="Create" id="edit-form">
         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
         @{int i = 0; }
         @foreach (var item in Model)
@@ -33,26 +39,35 @@
                             var propValue = prop.GetValue(item);
                             var propName = prop.Name;
                         }
-                        <label name="@(propName)[@i]" class="control-label">@propName</label>
+                        <label for="@(propName)[@i]" class="control-label">@propName</label>
                         <input name="@(propName)[@i]" value="@propValue" class="form-control" />
-                        <!--<span asp-validation-for="@propName" class="text-danger"></span>-->
                     </div>
                 }
                 @{i++;}
             </div>
         }
-        <div class="input-group mb-4">
-            <div class="col-md-3">
-                <label name="tableName" class="control-label">Table name</label>
-                <input name="tableName" value="@ViewBag.TableName" class="form-control" />
-            </div>
-        </div>
         <div class="form-group">
             <div class="col-md-3">
                 <input type="submit" value="Update" class="btn btn-primary" />
             </div>
         </div>
-    </form>   
+    </form>
+</div>
+<div class="row">
+    @if (ViewBag.Page > 1)
+    {
+        <a href="@Url.Action("Create", new { page = ViewBag.Page - 1 })"
+           class="btn btn-default">
+            &laquo; Prev
+        </a>
+    }
+    @if (ViewBag.Page < ViewBag.MaxPage)
+    {
+        <a href="@Url.Action("Create", new { page = ViewBag.Page + 1 })"
+           class="btn btn-default">
+            Next &raquo;
+        </a>
+    }
 </div>
 
 <div>
@@ -61,4 +76,5 @@
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script src="~/js/editRecords.js"></script>
 }
