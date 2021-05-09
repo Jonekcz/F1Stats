@@ -117,28 +117,25 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="Poi" xml:space="preserve">
-    <value>Standings</value>
+  <data name="Add" xml:space="preserve">
+    <value>Dodaj</value>
   </data>
-  <data name="Constructor standings" xml:space="preserve">
-    <value>Constructor standings</value>
+  <data name="Back to List" xml:space="preserve">
+    <value>Powrót</value>
   </data>
-  <data name="Driver standings" xml:space="preserve">
-    <value>Driver standings</value>
+  <data name="Choose a table" xml:space="preserve">
+    <value>Wybierz tabelę</value>
   </data>
-  <data name="Last name" xml:space="preserve">
-    <value>Last name</value>
+  <data name="Confirm" xml:space="preserve">
+    <value>Potwierdź</value>
   </data>
-  <data name="Name" xml:space="preserve">
-    <value>Name</value>
+  <data name="Next" xml:space="preserve">
+    <value>Następna</value>
   </data>
-  <data name="Points" xml:space="preserve">
-    <value>Points</value>
+  <data name="Prev" xml:space="preserve">
+    <value>Poprzednia</value>
   </data>
-  <data name="Position" xml:space="preserve">
-    <value>Position</value>
-  </data>
-  <data name="Team" xml:space="preserve">
-    <value>Team</value>
+  <data name="Update" xml:space="preserve">
+    <value>Zaktualizuj</value>
   </data>
 </root>

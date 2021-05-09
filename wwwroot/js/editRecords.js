@@ -21,6 +21,7 @@
 
                 form.append(submitBtn);
             }).fail(function () {
+                
                 form.append("<div>Nie udało się wyświetlić rekordów z wybranej tabeli</div>");
             });
         }

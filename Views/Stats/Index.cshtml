@@ -26,7 +26,7 @@
                 <td scope="row">@item.Position</td>
                 <td>@item.DriverIdNavigation.Name @item.DriverIdNavigation.Lastname</td>
                 <td>@item.TeamIdNavigation.Name</td>
-                <td>@if(item.Time != null) @item.Time.ToString("hh':'mm':'ss':'fff") else @item.ResultTypeIdNavigation.Name</td>
+                <td>@if(item.Time != null) @item.Time.ToString("hh':'mm':'ss':'fff") else if(item.ResultTypeIdNavigation != null) @item.ResultTypeIdNavigation.Name</td>
                 <td>@item.Points</td>
             </tr>
             }
@@ -37,9 +37,6 @@
 <section id="drivers">
     <h2>@DateTime.Now.Year @localizer["Drivers"]</h2><br />
 
-    <p>
-        <!-- <a asp-action="Create">Create New</a>-->
-    </p>
     <table class="table">
         <thead>
             <tr>
@@ -73,13 +70,6 @@
                     <td>
                         @item.CountryIdNavigation.Name
                     </td>
-                    <!--
-                    <td>
-                        <a asp-action="Edit" asp-route-id="@item.DriverId">Edit</a> |
-                        <a asp-action="Details" asp-route-id="@item.DriverId">Details</a> |
-                        <a asp-action="Delete" asp-route-id="@item.DriverId">Delete</a>
-                    </td>
-                    -->
                 </tr>
             }
         </tbody>

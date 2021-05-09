@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.Extensions.Primitives;
+using Microsoft.Extensions.Localization;
 using Newtonsoft.Json;
 using System;
 using System.Collections;
@@ -22,9 +22,11 @@ namespace F1_Stats.Controllers
     public class StatsController : Controller
     {
         private readonly F1Context _context;
-        public StatsController(F1Context context)
+        private readonly IStringLocalizer<StatsController> _stringLocalizer;
+        public StatsController(F1Context context, IStringLocalizer<StatsController> stringLocalizer)
         {
             _context = context;
+            _stringLocalizer = stringLocalizer;
         }
 
         //[Route("/Stats/Error/{code:int}")]
@@ -39,22 +41,22 @@ namespace F1_Stats.Controllers
         {
             int year = DateTime.Now.Year;
 
-            var countries = await (_context.Krajs.ToListAsync());
-            var teams = await (_context.Zespols.ToListAsync());
-            var resultTypes = await (_context.RodzajWynikus.ToListAsync());
-            var drivers = await (from d in _context.Kierowcas join r in _context.WynikWyscigus on d.DriverId equals r.DriverId join w in _context.Wydarzenies on r.RaceId equals w.EventId join s in _context.Sezons on w.SeasonId equals s.SeasonId where s.Year == year select d).ToListAsync();
+            var countries = await (_context.Countries.ToListAsync());
+            var teams = await (_context.Teams.ToListAsync());
+            var resultTypes = await (_context.ResultTypes.ToListAsync());
+            var drivers = await (from d in _context.Drivers join r in _context.Results on d.DriverId equals r.DriverId join w in _context.Events on r.RaceId equals w.EventId join s in _context.Seasons on w.SeasonId equals s.SeasonId where s.Year == year select d).ToListAsync();
 
             // last race
-            var lastRace = _context.Wydarzenies.OrderByDescending(w => w.DateTime).First(w => w.DateTime < DateTime.Now);
+            var lastRace = _context.Events.OrderByDescending(w => w.DateTime).First(w => w.DateTime < DateTime.Now);
 
             // last race circuit name
-            lastRace.CircuitIdNavigation = _context.Tors.First(t => t.CircuitId == lastRace.CircuitId);
+            lastRace.CircuitIdNavigation = _context.Circuits.First(t => t.CircuitId == lastRace.CircuitId);
 
-            var results = await (from r in _context.WynikWyscigus join w in _context.Wydarzenies on r.RaceId equals w.EventId join s in _context.Sezons on w.SeasonId equals s.SeasonId join t in _context.Tors on w.CircuitId equals t.CircuitId where w.EventId == lastRace.EventId orderby r.Position.HasValue descending, r.Position ascending select r).ToListAsync();
-            var nextRace = _context.Wydarzenies.OrderBy(w => w.DateTime).First(w => w.DateTime > DateTime.Now);
+            var results = await (from r in _context.Results join w in _context.Events on r.RaceId equals w.EventId join s in _context.Seasons on w.SeasonId equals s.SeasonId join t in _context.Circuits on w.CircuitId equals t.CircuitId where w.EventId == lastRace.EventId orderby r.Position.HasValue descending, r.Position ascending select r).ToListAsync();
+            var nextRace = _context.Events.OrderBy(w => w.DateTime).First(w => w.DateTime > DateTime.Now);
 
             // get a track
-            nextRace.CircuitIdNavigation = _context.Tors.Single(t => t.CircuitId == nextRace.CircuitId);
+            nextRace.CircuitIdNavigation = _context.Circuits.Single(t => t.CircuitId == nextRace.CircuitId);
 
             // get a country
             foreach (Models.Driver d in drivers)
@@ -71,6 +73,7 @@ namespace F1_Stats.Controllers
             // Add a result type
             foreach (Result r in results)
             {
+                if(r.ResultTypeId != null)
                 r.ResultTypeIdNavigation = resultTypes.Single(t => t.ResultTypeId == r.ResultTypeId);
             }
             ViewBag.Drivers = drivers;
@@ -85,12 +88,12 @@ namespace F1_Stats.Controllers
         {
             int year = DateTime.Now.Year;
 
-            var teams = await (from t in _context.Zespols join r in _context.WynikWyscigus on t.TeamId equals r.TeamId join w in _context.Wydarzenies on r.RaceId equals w.EventId join s in _context.Sezons on w.SeasonId equals s.SeasonId where s.Year == year select t).Distinct().ToListAsync();
+            var teams = await (from t in _context.Teams join r in _context.Results on t.TeamId equals r.TeamId join w in _context.Events on r.RaceId equals w.EventId join s in _context.Seasons on w.SeasonId equals s.SeasonId where s.Year == year select t).Distinct().ToListAsync();
 
             // get a country
             foreach (Team t in teams)
             {
-                t.CountryIdNavigation = _context.Krajs.Single(c => c.CountryId == t.CountryId);
+                t.CountryIdNavigation = _context.Countries.Single(c => c.CountryId == t.CountryId);
             }
 
             ViewBag.Teams = teams;
@@ -120,7 +123,7 @@ namespace F1_Stats.Controllers
                 command.CommandText = "SELECT TOP 1 rok,round FROM (SELECT Wydarzenie.id_terminarza,Sezon.rok,ROW_NUMBER() OVER(ORDER BY Wydarzenie.data_czas) \"round\",Wydarzenie.data_czas FROM Wydarzenie INNER JOIN Sezon ON Sezon.id_sezonu = Wydarzenie.id_sezonu WHERE  Sezon.rok = YEAR(GETDATE())) races INNER JOIN Wynik_kwalifikacji ON id_terminarza = Wynik_kwalifikacji.id_kwalifikacji WHERE data_czas < GETDATE() ORDER BY data_czas DESC;";
                 _context.Database.OpenConnection();
                 // last race whose results are available in db
-                using var result = await command.ExecuteReaderAsync();
+                var result = await command.ExecuteReaderAsync();
                 while (result.Read())
                 {
                     year = result.GetInt16(0);
@@ -129,13 +132,17 @@ namespace F1_Stats.Controllers
                 }
             }
 
-            // get data from ergast
-            // qualifying
-            string url = $"http://ergast.com/api/f1/{year}/{round + 1}/qualifying.json";
-            WebClient webClient = new WebClient();
-            // json
-            string data = webClient.DownloadString(new Uri(url));
-            Rootobject rootobject = JsonConvert.DeserializeObject<Rootobject>(data);
+            // count of rounds in current year
+            int roundsCount = (await _context.Events.Include(i => i.SeasonIdNavigation).Where(i => i.SeasonIdNavigation.Year == year).ToListAsync()).Count;
+
+            if (++round <= roundsCount)
+            {
+                
+                string url = $"http://ergast.com/api/f1/{year}/{round}/qualifying.json";
+                APIHelper api = new(_context,year,round);
+                api.SetQualifyingResults();
+                api.SetRaceResults();
+            }
             return RedirectToAction("Index");
         }
 
@@ -147,7 +154,7 @@ namespace F1_Stats.Controllers
                 return NotFound();
             }
 
-            var kierowca = await _context.Kierowcas
+            var kierowca = await _context.Drivers
                 .Include(k => k.CountryIdNavigation)
                 .FirstOrDefaultAsync(m => m.DriverId == id);
             if (kierowca == null)
@@ -166,11 +173,13 @@ namespace F1_Stats.Controllers
         public IActionResult Create(int page = 1)
         {
             const int pageSize = 50;
-            int count = _context.Set(TableNames("")).Count();
-            int maxPage = ((count / pageSize) - (count % pageSize == 0 ? 1 : 0))+1;
+            string currentTable = TableNames("");
+            int count = _context.Set(currentTable).Count();
+            int maxPage = ((count / pageSize) - (count % pageSize == 0 ? 1 : 0)) + 1;
             page = page > maxPage ? maxPage : page;
-            var dynamicTable = _context.Set(TableNames("")).Skip((page-1) * pageSize).Take(pageSize);
-            
+
+            var dynamicTable = GetDynamicTable(currentTable, page, pageSize);
+
             ViewBag.MaxPage = maxPage;
             ViewBag.Page = page;
             if (TempData.ContainsKey("Message"))
@@ -178,14 +187,50 @@ namespace F1_Stats.Controllers
             return View(dynamicTable);
         }
 
+        private IQueryable<object> GetDynamicTable(string currentTable, int page, int pageSize)
+        {
+            // class name with namespace
+            string className = (string)TempData["currentTableClass"];
+            TempData["currentTableClass"] = className;
+            // db table class type
+            Type objectType = Type.GetType(className);
+            var properties = objectType.GetProperties().Where(i => i.Name.Contains("Navigation"));
+
+            var dynamicTable = _context.Set(currentTable).Skip((page - 1) * pageSize).Take(pageSize);
+            //List<string> navigationEntities = new();
+            foreach (var property in properties)
+            {
+                dynamicTable = dynamicTable.Include(property.Name);
+                //navigationEntities.Add(property.PropertyType.Name);
+            }
+            List<SelectList> selectLists = new();
+            /*foreach(string item in navigationEntities)
+            {
+                //var key = _context.Model.GetEntityTypes().Where(i=>i.Name == item).First().FindPrimaryKey();
+                var value = _context.Model.GetEntityTypes().Where(i => i.ClrType.Name == item).First().FindPrimaryKey().Properties[0].Name;
+                
+                selectLists.Add(new SelectList(_context.Set(item),,);
+            }*/
+
+            return dynamicTable;
+        }
+
         [Authorize]
         [HttpPost]
         public IActionResult ChooseTable(string tableName)
         {
             TempData["TableName"] = tableName;
+            const int pageSize = 50;
+            // class name
+            string correctTableName = TableNames(tableName);
+            int count = _context.Set(correctTableName).Count();
+            int maxPage = ((count / pageSize) - (count % pageSize == 0 ? 1 : 0)) + 1;
+
             // db records
-            var dynamicTable = _context.Set(TableNames(tableName));
-            //return View("~/Views/Stats/Create.cshtml", dynamicTable);
+            var dynamicTable = GetDynamicTable(correctTableName, 1, pageSize);
+
+            ViewBag.MaxPage = maxPage;
+            ViewBag.Page = 1;
             return Json(dynamicTable);
         }
 
@@ -199,7 +244,7 @@ namespace F1_Stats.Controllers
             Type objectType = Type.GetType(currentTableClass);
             TempData["currentTableClass"] = currentTableClass;
             // list of objects of a 'tableName' class
-            Type listType = typeof(List<>).MakeGenericType( objectType);
+            Type listType = typeof(List<>).MakeGenericType(objectType);
             // list of records
             var list = Activator.CreateInstance(listType);
             // single record
@@ -233,11 +278,11 @@ namespace F1_Stats.Controllers
             // update database
             _context.UpdateRange(((IList)list)[0]);
             await _context.SaveChangesAsync();
-            TempData["Message"] = "Zaaktualizowano pomyślnie";
+            TempData["Message"] = _stringLocalizer["Message"].Value;
             return RedirectToAction("Create");
         }
 
-        private object CastItem(string item, object record, string currentProperty)
+        private static object CastItem(string item, object record, string currentProperty)
         {
             Type type = record.GetType().GetProperty(currentProperty).PropertyType;
             if (type == typeof(string))
@@ -245,20 +290,33 @@ namespace F1_Stats.Controllers
             if (type == typeof(int))
                 return int.Parse(item);
             if (type == typeof(decimal) || type == typeof(decimal?))
-                return decimal.Parse(item,CultureInfo.CurrentCulture);
+            {
+                if (item.Contains(",") && !item.Contains("."))
+                {
+                    item = item.Replace(",", ".");
+                }
+                return decimal.Parse(item, new CultureInfo("en"));
+            }
             if (type == typeof(float))
-                return float.Parse(item);
+            {
+                if (item.Contains(",") && !item.Contains("."))
+                {
+                    item = item.Replace(",", ".");
+                }
+                return float.Parse(item, new CultureInfo("en"));
+            }
             if (type == typeof(DateTime))
                 return DateTime.Parse(item);
             return null;
         }
 
         // get db table names, pass them to the select list, get the current selected table
-        private String TableNames(string currentTable)
+        private string TableNames(string currentTable)
         {
             // current language
             string lang = CultureInfo.CurrentCulture.Name;
-            var entities = _context.Model.GetEntityTypes();
+            // entities with a key
+            var entities = _context.Model.GetEntityTypes().Where(i => i.FindPrimaryKey() != null);
             List<string> tableNames = new List<string>();
             foreach (var entity in entities)
             {
@@ -290,28 +348,11 @@ namespace F1_Stats.Controllers
                         break;
                     }
             }
+            // with namespace
             TempData["currentTableClass"] = entityType.ClrType.FullName;
             // table name e.g Driver
             return currentTable;
         }
-
-
-        // POST: Stats/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        /*[HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind(include: "IdKierowcy,Imie,Nazwisko,IdKraju,DataUrodzenia")] Models.Driver kierowca)
-        {
-            if (ModelState.IsValid)
-            {
-                _context.Add(kierowca);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-            ViewData["IdKraju"] = new SelectList(_context.Krajs, "IdKraju", "Nazwa", kierowca.CountryId);
-            return View(kierowca);
-        }*/
 
         // GET: Stats/Edit/5
         public async Task<IActionResult> Edit(int? id)
@@ -321,12 +362,12 @@ namespace F1_Stats.Controllers
                 return NotFound();
             }
 
-            var kierowca = await _context.Kierowcas.FindAsync(id);
+            var kierowca = await _context.Drivers.FindAsync(id);
             if (kierowca == null)
             {
                 return NotFound();
             }
-            ViewData["IdKraju"] = new SelectList(_context.Krajs, "IdKraju", "Nazwa", kierowca.CountryId);
+            ViewData["IdKraju"] = new SelectList(_context.Countries, "IdKraju", "Nazwa", kierowca.CountryId);
             return View(kierowca);
         }
 
@@ -362,7 +403,7 @@ namespace F1_Stats.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["IdKraju"] = new SelectList(_context.Krajs, "IdKraju", "Nazwa", kierowca.CountryId);
+            ViewData["IdKraju"] = new SelectList(_context.Countries, "IdKraju", "Nazwa", kierowca.CountryId);
             return View(kierowca);
         }
 
@@ -374,7 +415,7 @@ namespace F1_Stats.Controllers
                 return NotFound();
             }
 
-            var kierowca = await _context.Kierowcas
+            var kierowca = await _context.Drivers
                 .Include(k => k.CountryIdNavigation)
                 .FirstOrDefaultAsync(m => m.DriverId == id);
             if (kierowca == null)
@@ -390,15 +431,15 @@ namespace F1_Stats.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var kierowca = await _context.Kierowcas.FindAsync(id);
-            _context.Kierowcas.Remove(kierowca);
+            var kierowca = await _context.Drivers.FindAsync(id);
+            _context.Drivers.Remove(kierowca);
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
         private bool KierowcaExists(int id)
         {
-            return _context.Kierowcas.Any(e => e.DriverId == id);
+            return _context.Drivers.Any(e => e.DriverId == id);
         }
     }
 }

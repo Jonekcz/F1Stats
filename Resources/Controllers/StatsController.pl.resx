@@ -117,28 +117,7 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="Poi" xml:space="preserve">
-    <value>Standings</value>
-  </data>
-  <data name="Constructor standings" xml:space="preserve">
-    <value>Constructor standings</value>
-  </data>
-  <data name="Driver standings" xml:space="preserve">
-    <value>Driver standings</value>
-  </data>
-  <data name="Last name" xml:space="preserve">
-    <value>Last name</value>
-  </data>
-  <data name="Name" xml:space="preserve">
-    <value>Name</value>
-  </data>
-  <data name="Points" xml:space="preserve">
-    <value>Points</value>
-  </data>
-  <data name="Position" xml:space="preserve">
-    <value>Position</value>
-  </data>
-  <data name="Team" xml:space="preserve">
-    <value>Team</value>
+  <data name="Message" xml:space="preserve">
+    <value>Zaktulizowano pomyślnie bazę</value>
   </data>
 </root>

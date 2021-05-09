@@ -126,7 +126,13 @@
   <data name="Logout" xml:space="preserve">
     <value>Wyloguj się</value>
   </data>
-  <data name="Register" xml:space="preserve">
+  <data name="Registration" xml:space="preserve">
     <value>Rejestracja</value>
+  </data>
+  <data name="pl" xml:space="preserve">
+    <value>Polski</value>
+  </data>
+  <data name="en" xml:space="preserve">
+    <value>Angielski</value>
   </data>
 </root>

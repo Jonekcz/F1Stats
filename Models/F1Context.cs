@@ -23,19 +23,19 @@ namespace F1_Stats.Models
         // constructor standings procedure
         public virtual DbSet<TeamStandings> TeamsStandings { get; set; }
 
-        public virtual DbSet<LapTime> CzasOkrazenia { get; set; }
-        public virtual DbSet<Driver> Kierowcas { get; set; }
-        public virtual DbSet<Continent> Kontynents { get; set; }
-        public virtual DbSet<Country> Krajs { get; set; }
-        public virtual DbSet<City> Miastos { get; set; }
+        public virtual DbSet<LapTime> LapTimes { get; set; }
+        public virtual DbSet<Driver> Drivers { get; set; }
+        public virtual DbSet<Continent> Continents { get; set; }
+        public virtual DbSet<Country> Countries { get; set; }
+        public virtual DbSet<City> Cities { get; set; }
         public virtual DbSet<Pitstop> Pitstops { get; set; }
-        public virtual DbSet<ResultType> RodzajWynikus { get; set; }
-        public virtual DbSet<Season> Sezons { get; set; }
-        public virtual DbSet<Circuit> Tors { get; set; }
-        public virtual DbSet<Event> Wydarzenies { get; set; }
-        public virtual DbSet<QualifyingResult> WynikKwalifikacjis { get; set; }
-        public virtual DbSet<Result> WynikWyscigus { get; set; }
-        public virtual DbSet<Team> Zespols { get; set; }
+        public virtual DbSet<ResultType> ResultTypes { get; set; }
+        public virtual DbSet<Season> Seasons { get; set; }
+        public virtual DbSet<Circuit> Circuits { get; set; }
+        public virtual DbSet<Event> Events { get; set; }
+        public virtual DbSet<QualifyingResult> QualifyingResults { get; set; }
+        public virtual DbSet<Result> Results { get; set; }
+        public virtual DbSet<Team> Teams { get; set; }
 
         // debugging
         public static readonly Microsoft.Extensions.Logging.LoggerFactory _myLoggerFactory =

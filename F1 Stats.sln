@@ -5,7 +5,7 @@ VisualStudioVersion = 16.0.31129.286
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "F1 Stats", "F1 Stats.csproj", "{93002331-155D-4D57-A415-94C63CAAB38A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "F1 StatsTests", "..\F1 StatsTests\F1 StatsTests.csproj", "{6C465AA8-5196-4AE3-A978-AFF9B2E8131F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "F1 StatsTests", "..\F1 StatsTests\F1 StatsTests.csproj", "{6C465AA8-5196-4AE3-A978-AFF9B2E8131F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -120,4 +120,13 @@
   <data name="Ergast" xml:space="preserve">
     <value>This site uses </value>
   </data>
+  <data name="Edit" xml:space="preserve">
+    <value>Edit</value>
+  </data>
+  <data name="Standings" xml:space="preserve">
+    <value>Standings</value>
+  </data>
+  <data name="Teams" xml:space="preserve">
+    <value>Teams</value>
+  </data>
 </root>

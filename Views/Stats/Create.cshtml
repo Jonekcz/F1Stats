@@ -1,26 +1,27 @@
 ﻿@using System.Reflection 
+@inject Microsoft.AspNetCore.Mvc.Localization.IViewLocalizer localizer;
 @{
     ViewData["Title"] = "Create";
 }
 
 
-<h1>Dodaj</h1>
+<h1>@localizer["Add"]</h1>
 
 <div class="row">
     <div class="col-md-4">
         @if (ViewData.ContainsKey("Message")) { 
         <div class="alert alert-success alert-dismissible fade show" role="alert">
             @ViewData["Message"]
-            <button type="button" class="close" data-bs-dismiss="alert" aria-label="Close"><span aria-hidden="true">×</span></button>
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">×</span></button>
         </div>
         }
         <form asp-action="ChooseTable" id="choose-table">
             <div class="form-group">
-                <label for="TableName" class="control-label">Choose a table</label>
+                <label for="TableName" class="control-label">@localizer["Choose a table"]</label>
                 <select name="TableName" class="form-control" id="table-name" asp-items="ViewBag.Tables"></select>
             </div>
             <div class="form-group">
-                <input type="submit" value="Choose" class="btn btn-primary" />
+                <input type="submit" value="@localizer["Confirm"]" class="btn btn-primary" />
             </div>
         </form>
     </div>
@@ -48,30 +49,32 @@
         }
         <div class="form-group">
             <div class="col-md-3">
-                <input type="submit" value="Update" class="btn btn-primary" />
+                <input type="submit" value="@localizer["Update"]" class="btn btn-primary" />
             </div>
         </div>
     </form>
 </div>
 <div class="row">
-    @if (ViewBag.Page > 1)
-    {
-        <a href="@Url.Action("Create", new { page = ViewBag.Page - 1 })"
-           class="btn btn-default">
-            &laquo; Prev
-        </a>
-    }
-    @if (ViewBag.Page < ViewBag.MaxPage)
-    {
-        <a href="@Url.Action("Create", new { page = ViewBag.Page + 1 })"
-           class="btn btn-default">
-            Next &raquo;
-        </a>
-    }
+    <div class="col-md-3">
+        @if (ViewBag.Page > 1)
+        {
+            <a href="@Url.Action("Create", new { page = ViewBag.Page - 1 })"
+               class="btn btn-default">
+                &laquo; @localizer["Prev"]
+            </a>
+        }
+        @if (ViewBag.Page < ViewBag.MaxPage)
+        {
+            <a href="@Url.Action("Create", new { page = ViewBag.Page + 1 })"
+               class="btn btn-default">
+                @localizer["Next"] &raquo;
+            </a>
+        }
+    </div>
 </div>
 
 <div>
-    <a asp-action="Index">Back to List</a>
+    <a asp-action="Index">@localizer["Back to List"]</a>
 </div>
 
 @section Scripts {

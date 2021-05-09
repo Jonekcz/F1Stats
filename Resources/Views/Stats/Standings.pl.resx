@@ -135,7 +135,7 @@
   <data name="Position" xml:space="preserve">
     <value>Pozycja</value>
   </data>
-  <data name="Standings" xml:space="preserve">
+  <data name="Poi" xml:space="preserve">
     <value>Klasyfikacja</value>
   </data>
   <data name="Team" xml:space="preserve">

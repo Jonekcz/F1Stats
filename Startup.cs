@@ -55,7 +55,8 @@ namespace F1_Stats
 
             // localization
             services.AddLocalization(options => options.ResourcesPath = "Resources");
-            services.AddMvc().AddViewLocalization(Microsoft.AspNetCore.Mvc.Razor.LanguageViewLocationExpanderFormat.Suffix)
+            // json
+            services.AddMvc().AddNewtonsoftJson(options => { options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore; }).AddViewLocalization(Microsoft.AspNetCore.Mvc.Razor.LanguageViewLocationExpanderFormat.Suffix)
                 .AddDataAnnotationsLocalization();
             services.Configure<RequestLocalizationOptions>(options =>
             {
