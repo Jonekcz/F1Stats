@@ -32,7 +32,13 @@ namespace F1_Stats
         {
             // get data from ergast
             using WebClient webClient = new();
-            json = webClient.DownloadString(new Uri(FormatUri()));
+            try
+            {
+                json = webClient.DownloadString(new Uri(FormatUri()));
+            }
+            catch (Exception)
+            {
+            }
         }
 
         private string FormatUri()
@@ -44,55 +50,60 @@ namespace F1_Stats
         {
             apiTable = "qualifying";
             DownloadJSON();
-            Qualifying.Rootobject rootobject = JsonConvert.DeserializeObject<Qualifying.Rootobject>(json);
-            List<QualifyingResult> qualifyingResults = new();
-            int qualifyingId = _context.Events.Include(i => i.SeasonIdNavigation).Where(i => i.SeasonIdNavigation.Year == year).OrderBy(i => i.DateTime).Skip(round - 1).First().EventId;
-            if (rootobject.MRData.RaceTable.Races != null)
+            if (json != null && json != "")
             {
-                foreach (var item in rootobject.MRData.RaceTable.Races[0].QualifyingResults)
+                Qualifying.Rootobject rootobject = JsonConvert.DeserializeObject<Qualifying.Rootobject>(json);
+                List<QualifyingResult> qualifyingResults = new();
+                int qualifyingId = _context.Events.Include(i => i.SeasonIdNavigation).Where(i => i.SeasonIdNavigation.Year == year).OrderBy(i => i.DateTime).Skip(round - 1).First().EventId;
+                int length = rootobject.MRData.RaceTable.Races.Length;
+                if (length > 0)
                 {
-                    QualifyingResult qualifyingResult = new();
-                    qualifyingResult.QualifyingId = qualifyingId;
-                    qualifyingResult.DriverId = _context.Drivers.First(i => i.Name == item.Driver.givenName && i.Lastname == item.Driver.familyName).DriverId;
-                    qualifyingResult.Position = (byte?)int.Parse(item.position);
-                    string time = item.Q1;
+                    foreach (var item in rootobject.MRData.RaceTable.Races[0].QualifyingResults)
+                    {
+                        QualifyingResult qualifyingResult = new();
+                        qualifyingResult.QualifyingId = qualifyingId;
+                        qualifyingResult.DriverId = _context.Drivers.First(i => i.Name == item.Driver.givenName && i.Lastname == item.Driver.familyName).DriverId;
+                        qualifyingResult.Position = (byte?)int.Parse(item.position);
+                        string time = item.Q1;
 
-                    if (time == null || time.Equals(""))
-                    {
-                        qualifyingResult.Q1Time = null;
-                    }
-                    else
-                    {
+                        if (time == null || time.Equals(""))
+                        {
+                            qualifyingResult.Q1Time = null;
+                        }
+                        else
+                        {
 
-                        string[] SingleTimeArray = time.Split(':');
-                       
-                        qualifyingResult.Q1Time = new TimeSpan(0, 0, int.Parse(SingleTimeArray[0]), int.Parse((SingleTimeArray[1]).Split('.')[0]), int.Parse(time.Split('.')[1]));
+                            string[] SingleTimeArray = time.Split(':');
+
+                            qualifyingResult.Q1Time = new TimeSpan(0, 0, int.Parse(SingleTimeArray[0]), int.Parse((SingleTimeArray[1]).Split('.')[0]), int.Parse(time.Split('.')[1]));
+                        }
+                        time = item.Q2;
+                        if (time == null || time.Equals(""))
+                        {
+                            qualifyingResult.Q2Time = null;
+                        }
+                        else
+                        {
+                            qualifyingResult.Q2Time = new TimeSpan(0, 0, int.Parse(time.Substring(0, time.IndexOf(":"))), int.Parse(time.Substring(time.IndexOf(":") + 1, 2)), int.Parse(time.Substring(time.IndexOf(".") + 1)));
+                        }
+                        time = item.Q3;
+                        if (time == null || time.Equals(""))
+                        {
+                            qualifyingResult.Q3Time = null;
+                        }
+                        else
+                        {
+                            qualifyingResult.Q3Time = new TimeSpan(0, 0, int.Parse(time.Substring(0, time.IndexOf(":"))), int.Parse(time.Substring(time.IndexOf(":") + 1, 2)), int.Parse(time.Substring(time.IndexOf(".") + 1)));
+                        }
+                        qualifyingResult.TeamId = _context.Teams.First(i => i.Name == item.Constructor.name).TeamId;
+                        if (!_context.QualifyingResults.Contains(qualifyingResult))
+                            qualifyingResults.Add(qualifyingResult);
                     }
-                    time = item.Q2;
-                    if (time == null || time.Equals(""))
-                    {
-                        qualifyingResult.Q2Time = null;
-                    }
-                    else
-                    {
-                        qualifyingResult.Q2Time = new TimeSpan(0, 0, int.Parse(time.Substring(0, time.IndexOf(":"))), int.Parse(time.Substring(time.IndexOf(":") + 1, 2)), int.Parse(time.Substring(time.IndexOf(".") + 1)));
-                    }
-                    time = item.Q3;
-                    if (time == null || time.Equals(""))
-                    {
-                        qualifyingResult.Q3Time = null;
-                    }
-                    else
-                    {
-                        qualifyingResult.Q3Time = new TimeSpan(0, 0, int.Parse(time.Substring(0, time.IndexOf(":"))), int.Parse(time.Substring(time.IndexOf(":") + 1, 2)), int.Parse(time.Substring(time.IndexOf(".") + 1)));
-                    }
-                    qualifyingResult.TeamId = _context.Teams.First(i => i.Name == item.Constructor.name).TeamId;
-                    qualifyingResults.Add(qualifyingResult);
+
+                    // update db
+                    _context.AddRange(qualifyingResults);
+                    _context.SaveChanges();
                 }
-
-                // update db
-                _context.AddRange(qualifyingResults);
-                _context.SaveChanges();
             }
         }
 
@@ -100,43 +111,48 @@ namespace F1_Stats
         {
             apiTable = "results";
             DownloadJSON();
-            Results.Rootobject rootobject = JsonConvert.DeserializeObject<Results.Rootobject>(json);
-            List<Result> results = new();
-            int raceId = _context.Events.Include(i => i.SeasonIdNavigation).Where(i => i.SeasonIdNavigation.Year == year).OrderBy(i => i.DateTime).Skip(round - 1).First().EventId;
-            if (rootobject.MRData.RaceTable.Races != null)
+            if (json != null && json != "")
             {
-                foreach (var item in rootobject.MRData.RaceTable.Races[0].Results)
+                Results.Rootobject rootobject = JsonConvert.DeserializeObject<Results.Rootobject>(json);
+                List<Result> results = new();
+                int raceId = _context.Events.Include(i => i.SeasonIdNavigation).Where(i => i.SeasonIdNavigation.Year == year).OrderBy(i => i.DateTime).Skip(round - 1).First().EventId;
+                int length = rootobject.MRData.RaceTable.Races.Length;
+                if (length > 0)
                 {
-                    Result result = new();
-                    result.RaceId = raceId;
-                    result.DriverId = _context.Drivers.First(i => i.Name == item.Driver.givenName && i.Lastname == item.Driver.familyName).DriverId;
-                    result.Position = (byte?)int.Parse(item.position);
-                    result.Points = (byte?)int.Parse(item.points);
-                    
-                    if (item.FastestLap == null || item.FastestLap.Time.time.Equals(""))
+                    foreach (var item in rootobject.MRData.RaceTable.Races[0].Results)
                     {
-                        result.BestLapTime = null;
-                    }
-                    else
-                    {
-                        string time = item.FastestLap.Time.time;
-                        result.BestLapTime = new TimeSpan(0, 0, int.Parse(time.Substring(0, time.IndexOf(":"))), int.Parse(time.Substring(time.IndexOf(":") + 1, 2)), int.Parse(time[(time.IndexOf(".") + 1)..]));
-                    }
-                    if (item.Time == null)
-                    {
-                        result.Time = null;
-                    }
-                    else
-                    {
-                        result.Time = TimeSpan.FromMilliseconds(double.Parse(item.Time.millis));
-                    }
-                    result.TeamId = _context.Teams.First(i => i.Name == item.Constructor.name).TeamId;
-                    results.Add(result);
-                }
+                        Result result = new();
+                        result.RaceId = raceId;
+                        result.DriverId = _context.Drivers.First(i => i.Name == item.Driver.givenName && i.Lastname == item.Driver.familyName).DriverId;
+                        result.Position = (byte?)int.Parse(item.position);
+                        result.Points = (byte?)int.Parse(item.points);
 
-                // update db
-                _context.Results.AddRange(results);
-                _context.SaveChanges();
+                        if (item.FastestLap == null || item.FastestLap.Time.time.Equals(""))
+                        {
+                            result.BestLapTime = null;
+                        }
+                        else
+                        {
+                            string time = item.FastestLap.Time.time;
+                            result.BestLapTime = new TimeSpan(0, 0, int.Parse(time.Substring(0, time.IndexOf(":"))), int.Parse(time.Substring(time.IndexOf(":") + 1, 2)), int.Parse(time[(time.IndexOf(".") + 1)..]));
+                        }
+                        if (item.Time == null)
+                        {
+                            result.Time = null;
+                        }
+                        else
+                        {
+                            result.Time = TimeSpan.FromMilliseconds(double.Parse(item.Time.millis));
+                        }
+                        result.TeamId = _context.Teams.First(i => i.Name == item.Constructor.name).TeamId;
+                        if (!_context.Results.Contains(result))
+                            results.Add(result);
+                    }
+
+                    // update db
+                    _context.Results.AddRange(results);
+                    _context.SaveChanges();
+                }
             }
         }
 
@@ -144,44 +160,49 @@ namespace F1_Stats
         {
             apiTable = "pitstops";
             DownloadJSON();
-            Pitstops.Rootobject rootobject = JsonConvert.DeserializeObject<Pitstops.Rootobject>(json);
-            List<Pitstop> pitstops = new();
-            int raceId = _context.Events.Include(i => i.SeasonIdNavigation).Where(i => i.SeasonIdNavigation.Year == year).OrderBy(i => i.DateTime).Skip(round - 1).First().EventId;
-            if (rootobject.MRData.RaceTable.Races != null)
+            if (json != null && json != "")
             {
-                foreach (var item in rootobject.MRData.RaceTable.Races[0].PitStops)
+                Pitstops.Rootobject rootobject = JsonConvert.DeserializeObject<Pitstops.Rootobject>(json);
+                List<Pitstop> pitstops = new();
+                int raceId = _context.Events.Include(i => i.SeasonIdNavigation).Where(i => i.SeasonIdNavigation.Year == year).OrderBy(i => i.DateTime).Skip(round - 1).First().EventId;
+                int length = rootobject.MRData.RaceTable.Races.Length;
+                if (length > 0)
                 {
-                    Pitstop pitstop = new();
-                    pitstop.RaceId = raceId;
-                    // Not implemented
-                    /*pitstop.DriverId = _context.Drivers.First(i => i.Name == item.driverId.givenName && i.Lastname == item.Driver.familyName).DriverId;
-                    pitstop.Position = (byte?)int.Parse(item.position);
-                    pitstop.Points = (byte?)int.Parse(item.points);
+                    foreach (var item in rootobject.MRData.RaceTable.Races[0].PitStops)
+                    {
+                        Pitstop pitstop = new();
+                        pitstop.RaceId = raceId;
+                        // Not implemented
+                        /*pitstop.DriverId = _context.Drivers.First(i => i.Name == item.driverId.givenName && i.Lastname == item.Driver.familyName).DriverId;
+                        pitstop.Position = (byte?)int.Parse(item.position);
+                        pitstop.Points = (byte?)int.Parse(item.points);
 
-                    if (item.FastestLap == null || item.FastestLap.Time.time.Equals(""))
-                    {
-                        pitstop.BestLapTime = null;
+                        if (item.FastestLap == null || item.FastestLap.Time.time.Equals(""))
+                        {
+                            pitstop.BestLapTime = null;
+                        }
+                        else
+                        {
+                            string time = item.FastestLap.Time.time;
+                            pitstop.BestLapTime = new TimeSpan(0, 0, int.Parse(time.Substring(0, time.IndexOf(":"))), int.Parse(time.Substring(time.IndexOf(":") + 1, 2)), int.Parse(time[(time.IndexOf(".") + 1)..]));
+                        }
+                        if (item.Time == null)
+                        {
+                            pitstop.Time = null;
+                        }
+                        else
+                        {
+                            pitstop.Time = TimeSpan.FromMilliseconds(double.Parse(item.Time.millis));
+                        }
+                        pitstop.TeamId = _context.Teams.First(i => i.Name == item.Constructor.name).TeamId;
+                        if(!_context.Pitstops.Contains(pitstop))
+                        pitstops.Add(pitstop);*/
                     }
-                    else
-                    {
-                        string time = item.FastestLap.Time.time;
-                        pitstop.BestLapTime = new TimeSpan(0, 0, int.Parse(time.Substring(0, time.IndexOf(":"))), int.Parse(time.Substring(time.IndexOf(":") + 1, 2)), int.Parse(time[(time.IndexOf(".") + 1)..]));
-                    }
-                    if (item.Time == null)
-                    {
-                        pitstop.Time = null;
-                    }
-                    else
-                    {
-                        pitstop.Time = TimeSpan.FromMilliseconds(double.Parse(item.Time.millis));
-                    }
-                    pitstop.TeamId = _context.Teams.First(i => i.Name == item.Constructor.name).TeamId;
-                    pitstops.Add(pitstop);*/
+
+                    // update db
+                    /*_context.Results.AddRange(pitstops);
+                    _context.SaveChanges();*/
                 }
-
-                // update db
-                /*_context.Results.AddRange(pitstops);
-                _context.SaveChanges();*/
             }
         }
 
