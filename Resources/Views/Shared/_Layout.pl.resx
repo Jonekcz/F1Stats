@@ -129,4 +129,7 @@
   <data name="Teams" xml:space="preserve">
     <value>Zespoły</value>
   </data>
+  <data name="Update" xml:space="preserve">
+    <value>Aktualizuj bazę</value>
+  </data>
 </root>

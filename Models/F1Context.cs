@@ -39,7 +39,7 @@ namespace F1_Stats.Models
 
         // debugging
         public static readonly Microsoft.Extensions.Logging.LoggerFactory _myLoggerFactory =
-    new LoggerFactory(new[] {
+    new(new[] {
         new Microsoft.Extensions.Logging.Debug.DebugLoggerProvider()
     });
 

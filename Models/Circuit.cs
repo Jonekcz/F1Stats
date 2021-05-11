@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.ComponentModel.DataAnnotations;
 
 #nullable disable
 
@@ -16,6 +17,8 @@ namespace F1_Stats.Models
         [Column("IdToru")]
         public int CircuitId { get; set; }
         [Column("Nazwa")]
+        [Required]
+        [MinLength(3)]
         public string Name { get; set; }
         [Column("IdMiasta")]
         public int CityId { get; set; }

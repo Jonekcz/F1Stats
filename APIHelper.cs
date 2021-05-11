@@ -56,13 +56,17 @@ namespace F1_Stats
                     qualifyingResult.DriverId = _context.Drivers.First(i => i.Name == item.Driver.givenName && i.Lastname == item.Driver.familyName).DriverId;
                     qualifyingResult.Position = (byte?)int.Parse(item.position);
                     string time = item.Q1;
+
                     if (time == null || time.Equals(""))
                     {
                         qualifyingResult.Q1Time = null;
                     }
                     else
                     {
-                        qualifyingResult.Q1Time = new TimeSpan(0, 0, int.Parse(time.Substring(0, time.IndexOf(":"))), int.Parse(time.Substring(time.IndexOf(":") + 1, 2)), int.Parse(time.Substring(time.IndexOf(".") + 1)));
+
+                        string[] SingleTimeArray = time.Split(':');
+                       
+                        qualifyingResult.Q1Time = new TimeSpan(0, 0, int.Parse(SingleTimeArray[0]), int.Parse((SingleTimeArray[1]).Split('.')[0]), int.Parse(time.Split('.')[1]));
                     }
                     time = item.Q2;
                     if (time == null || time.Equals(""))
@@ -133,6 +137,51 @@ namespace F1_Stats
                 // update db
                 _context.Results.AddRange(results);
                 _context.SaveChanges();
+            }
+        }
+
+        internal void SetPitstops()
+        {
+            apiTable = "pitstops";
+            DownloadJSON();
+            Pitstops.Rootobject rootobject = JsonConvert.DeserializeObject<Pitstops.Rootobject>(json);
+            List<Pitstop> pitstops = new();
+            int raceId = _context.Events.Include(i => i.SeasonIdNavigation).Where(i => i.SeasonIdNavigation.Year == year).OrderBy(i => i.DateTime).Skip(round - 1).First().EventId;
+            if (rootobject.MRData.RaceTable.Races != null)
+            {
+                foreach (var item in rootobject.MRData.RaceTable.Races[0].PitStops)
+                {
+                    Pitstop pitstop = new();
+                    pitstop.RaceId = raceId;
+                    // Not implemented
+                    /*pitstop.DriverId = _context.Drivers.First(i => i.Name == item.driverId.givenName && i.Lastname == item.Driver.familyName).DriverId;
+                    pitstop.Position = (byte?)int.Parse(item.position);
+                    pitstop.Points = (byte?)int.Parse(item.points);
+
+                    if (item.FastestLap == null || item.FastestLap.Time.time.Equals(""))
+                    {
+                        pitstop.BestLapTime = null;
+                    }
+                    else
+                    {
+                        string time = item.FastestLap.Time.time;
+                        pitstop.BestLapTime = new TimeSpan(0, 0, int.Parse(time.Substring(0, time.IndexOf(":"))), int.Parse(time.Substring(time.IndexOf(":") + 1, 2)), int.Parse(time[(time.IndexOf(".") + 1)..]));
+                    }
+                    if (item.Time == null)
+                    {
+                        pitstop.Time = null;
+                    }
+                    else
+                    {
+                        pitstop.Time = TimeSpan.FromMilliseconds(double.Parse(item.Time.millis));
+                    }
+                    pitstop.TeamId = _context.Teams.First(i => i.Name == item.Constructor.name).TeamId;
+                    pitstops.Add(pitstop);*/
+                }
+
+                // update db
+                /*_context.Results.AddRange(pitstops);
+                _context.SaveChanges();*/
             }
         }
 

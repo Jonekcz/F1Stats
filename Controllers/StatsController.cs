@@ -5,17 +5,14 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.Localization;
-using Newtonsoft.Json;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Net;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using static F1_Stats.JSON.Qualifying;
 
 namespace F1_Stats.Controllers
 {
@@ -44,7 +41,7 @@ namespace F1_Stats.Controllers
             var countries = await (_context.Countries.ToListAsync());
             var teams = await (_context.Teams.ToListAsync());
             var resultTypes = await (_context.ResultTypes.ToListAsync());
-            var drivers = await (from d in _context.Drivers join r in _context.Results on d.DriverId equals r.DriverId join w in _context.Events on r.RaceId equals w.EventId join s in _context.Seasons on w.SeasonId equals s.SeasonId where s.Year == year select d).ToListAsync();
+            var drivers = await (from d in _context.Drivers join r in _context.Results on d.DriverId equals r.DriverId join w in _context.Events on r.RaceId equals w.EventId join s in _context.Seasons on w.SeasonId equals s.SeasonId where s.Year == year select d).Distinct().ToListAsync();
 
             // last race
             var lastRace = _context.Events.OrderByDescending(w => w.DateTime).First(w => w.DateTime < DateTime.Now);
@@ -104,7 +101,7 @@ namespace F1_Stats.Controllers
         {
             int year = DateTime.Now.Year;
 
-            var driverStandings = await (_context.DriversStandings.FromSqlRaw("EXEC dbo.driver_standings @sezon = {0}", year).ToListAsync());
+            var driverStandings = await _context.DriversStandings.FromSqlRaw("EXEC dbo.driver_standings @sezon = {0}", year).ToListAsync();
             var teamsStandings = await (_context.TeamsStandings.FromSqlRaw("EXEC dbo.constructor_standings @sezon = {0}", year).ToListAsync());
 
             ViewBag.DriverStandings = driverStandings;
@@ -146,25 +143,6 @@ namespace F1_Stats.Controllers
             return RedirectToAction("Index");
         }
 
-        // GET: Stats/Details/5
-        public async Task<IActionResult> Details(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var kierowca = await _context.Drivers
-                .Include(k => k.CountryIdNavigation)
-                .FirstOrDefaultAsync(m => m.DriverId == id);
-            if (kierowca == null)
-            {
-                return NotFound();
-            }
-
-            return View(kierowca);
-        }
-
         // GET: Stats/Create
         [Authorize]
         [HttpGet]
@@ -173,6 +151,8 @@ namespace F1_Stats.Controllers
         public IActionResult Create(int page = 1)
         {
             const int pageSize = 50;
+            TempData["page"] = page;
+            TempData.Keep("page");
             string currentTable = TableNames("");
             int count = _context.Set(currentTable).Count();
             int maxPage = ((count / pageSize) - (count % pageSize == 0 ? 1 : 0)) + 1;
@@ -197,7 +177,7 @@ namespace F1_Stats.Controllers
             var properties = objectType.GetProperties().Where(i => i.Name.Contains("Navigation"));
 
             var dynamicTable = _context.Set(currentTable).Skip((page - 1) * pageSize).Take(pageSize);
-            //List<string> navigationEntities = new();
+            /*//List<string> navigationEntities = new();
             foreach (var property in properties)
             {
                 dynamicTable = dynamicTable.Include(property.Name);
@@ -221,16 +201,17 @@ namespace F1_Stats.Controllers
         {
             TempData["TableName"] = tableName;
             const int pageSize = 50;
+            int page = (int)TempData["page"];
             // class name
             string correctTableName = TableNames(tableName);
             int count = _context.Set(correctTableName).Count();
-            int maxPage = ((count / pageSize) - (count % pageSize == 0 ? 1 : 0)) + 1;
+            int maxPage = (count / pageSize) - (count % pageSize == 0 ? 1 : 0) + 1;
 
             // db records
-            var dynamicTable = GetDynamicTable(correctTableName, 1, pageSize);
+            var dynamicTable = GetDynamicTable(correctTableName, page, pageSize);
 
             ViewBag.MaxPage = maxPage;
-            ViewBag.Page = 1;
+            ViewBag.Page = page;
             return Json(dynamicTable);
         }
 
@@ -239,6 +220,7 @@ namespace F1_Stats.Controllers
         [ActionName("Create")]
         public async Task<IActionResult> CreatePost()
         {
+            var model = ModelState;
             string currentTableClass = (string)TempData["currentTableClass"];
             // db table class type
             Type objectType = Type.GetType(currentTableClass);
@@ -313,11 +295,16 @@ namespace F1_Stats.Controllers
         // get db table names, pass them to the select list, get the current selected table
         private string TableNames(string currentTable)
         {
+            if (TempData.ContainsKey("TableName"))
+            {
+                currentTable = TempData["TableName"].ToString();
+                TempData["TableName"] = currentTable;
+            }
             // current language
             string lang = CultureInfo.CurrentCulture.Name;
             // entities with a key
             var entities = _context.Model.GetEntityTypes().Where(i => i.FindPrimaryKey() != null);
-            List<string> tableNames = new List<string>();
+            List<string> tableNames = new();
             foreach (var entity in entities)
             {
                 if (lang == "pl")
@@ -328,8 +315,8 @@ namespace F1_Stats.Controllers
             if (currentTable.Equals(""))
                 currentTable = tableNames[0];
 
-            ViewData["Tables"] = new SelectList(tableNames, TempData.ContainsKey("TableName") ? TempData["TableName"] : currentTable);
             TempData["TableName"] = currentTable;
+            ViewData["Tables"] = new SelectList(tableNames, TempData.ContainsKey("TableName") ? TempData["TableName"] : currentTable);
 
             var entityType = entities.First();
             foreach (var entity in entities)
@@ -348,98 +335,17 @@ namespace F1_Stats.Controllers
                         break;
                     }
             }
+
+            if(lang == "en")
+            {
+                currentTable = entityType.GetAnnotation("Relational:TableName") != null ? entityType.ClrType.Name : currentTable;
+            }
+
             // with namespace
             TempData["currentTableClass"] = entityType.ClrType.FullName;
             // table name e.g Driver
             return currentTable;
         }
 
-        // GET: Stats/Edit/5
-        public async Task<IActionResult> Edit(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var kierowca = await _context.Drivers.FindAsync(id);
-            if (kierowca == null)
-            {
-                return NotFound();
-            }
-            ViewData["IdKraju"] = new SelectList(_context.Countries, "IdKraju", "Nazwa", kierowca.CountryId);
-            return View(kierowca);
-        }
-
-        // POST: Stats/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("IdKierowcy,Imie,Nazwisko,IdKraju,DataUrodzenia")] Models.Driver kierowca)
-        {
-            if (id != kierowca.DriverId)
-            {
-                return NotFound();
-            }
-
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    _context.Update(kierowca);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!KierowcaExists(kierowca.DriverId))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
-            }
-            ViewData["IdKraju"] = new SelectList(_context.Countries, "IdKraju", "Nazwa", kierowca.CountryId);
-            return View(kierowca);
-        }
-
-        // GET: Stats/Delete/5
-        public async Task<IActionResult> Delete(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var kierowca = await _context.Drivers
-                .Include(k => k.CountryIdNavigation)
-                .FirstOrDefaultAsync(m => m.DriverId == id);
-            if (kierowca == null)
-            {
-                return NotFound();
-            }
-
-            return View(kierowca);
-        }
-
-        // POST: Stats/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
-        {
-            var kierowca = await _context.Drivers.FindAsync(id);
-            _context.Drivers.Remove(kierowca);
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
-        }
-
-        private bool KierowcaExists(int id)
-        {
-            return _context.Drivers.Any(e => e.DriverId == id);
-        }
     }
 }

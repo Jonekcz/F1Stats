@@ -138,4 +138,7 @@
   <data name="Update" xml:space="preserve">
     <value>Zaktualizuj</value>
   </data>
+  <data name="Edit" xml:space="preserve">
+    <value>Edytuj</value>
+  </data>
 </root>
