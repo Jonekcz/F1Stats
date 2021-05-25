@@ -1,11 +1,12 @@
 ﻿@inject Microsoft.AspNetCore.Mvc.Localization.IViewLocalizer localizer
 @{
     ViewData["Title"] = localizer["IndexTitle"];
+    var datetime = TimeZoneInfo.ConvertTimeFromUtc(ViewBag.NextRace.DateTime, TimeZoneInfo.Local);
 }
 <section id="next-race">
     <h2>@localizer["NextRace"]</h2>
     <p style="font-size: 1.3em">@ViewBag.NextRace.CircuitIdNavigation.Name</p>
-    <p style="font-size: 1.3em">@ViewBag.NextRace.DateTime</p>
+    <p style="font-size: 1.3em">@datetime</p>
 </section>
 <section id="last-race">
     <h2>@DateTime.Now.Year @ViewBag.LastRaceCircuit</h2><br />

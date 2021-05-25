@@ -53,25 +53,25 @@ namespace F1_Stats.Controllers
             var nextRace = _context.Events.OrderBy(w => w.DateTime).First(w => w.DateTime > DateTime.Now);
 
             // get a track
-            nextRace.CircuitIdNavigation = _context.Circuits.Single(t => t.CircuitId == nextRace.CircuitId);
+            nextRace.CircuitIdNavigation = _context.Circuits.First(t => t.CircuitId == nextRace.CircuitId);
 
             // get a country
             foreach (Models.Driver d in drivers)
             {
-                d.CountryIdNavigation = countries.Single(c => c.CountryId == d.CountryId);
+                d.CountryIdNavigation = countries.First(c => c.CountryId == d.CountryId);
             }
 
             // get a driver's team
             foreach (Result r in results)
             {
-                r.TeamIdNavigation = teams.Single(t => t.TeamId == r.TeamId);
+                r.TeamIdNavigation = teams.First(t => t.TeamId == r.TeamId);
             }
 
             // Add a result type
             foreach (Result r in results)
             {
                 if(r.ResultTypeId != null)
-                r.ResultTypeIdNavigation = resultTypes.Single(t => t.ResultTypeId == r.ResultTypeId);
+                r.ResultTypeIdNavigation = resultTypes.First(t => t.ResultTypeId == r.ResultTypeId);
             }
             ViewBag.Drivers = drivers;
             ViewBag.Results = results;
@@ -90,7 +90,7 @@ namespace F1_Stats.Controllers
             // get a country
             foreach (Team t in teams)
             {
-                t.CountryIdNavigation = _context.Countries.Single(c => c.CountryId == t.CountryId);
+                t.CountryIdNavigation = _context.Countries.First(c => c.CountryId == t.CountryId);
             }
 
             ViewBag.Teams = teams;
@@ -113,7 +113,20 @@ namespace F1_Stats.Controllers
         public async Task<IActionResult> Update()
         {
             int year = DateTime.Now.Year;
-            int round = 1;
+            int round = 1,lastRound = 1;
+
+            using (var command = _context.Database.GetDbConnection().CreateCommand())
+            {
+                command.CommandText = "SELECT TOP 1 rok,round FROM(SELECT Wydarzenie.id_terminarza, Sezon.rok, ROW_NUMBER() OVER(ORDER BY Wydarzenie.data_czas) 'round',Wydarzenie.data_czas FROM Wydarzenie INNER JOIN Sezon ON Sezon.id_sezonu = Wydarzenie.id_sezonu WHERE Sezon.rok = YEAR(GETDATE())) races WHERE data_czas < GETDATE() ORDER BY data_czas DESC;";
+                _context.Database.OpenConnection();
+                // last race whose results are available in db
+                var result = await command.ExecuteReaderAsync();
+                while (result.Read())
+                {
+                    // long to int
+                    lastRound = (int)result.GetInt64(1);
+                }
+            }
 
             using (var command = _context.Database.GetDbConnection().CreateCommand())
             {
@@ -128,18 +141,65 @@ namespace F1_Stats.Controllers
                     round = (int)result.GetInt64(1);
                 }
             }
-
             // count of rounds in current year
             int roundsCount = (await _context.Events.Include(i => i.SeasonIdNavigation).Where(i => i.SeasonIdNavigation.Year == year).ToListAsync()).Count;
+            APIHelper api = new(_context, year, ++round);
+            if (round <= roundsCount)
+            {
+                while(round <= lastRound)
+                {
+                    api.SetQualifyingResults();
+                    round++;
+                    api.Round = round;
+                }
+            }
 
+            using (var command = _context.Database.GetDbConnection().CreateCommand())
+            {
+                command.CommandText = "SELECT TOP 1 rok,round FROM (SELECT Wydarzenie.id_terminarza,Sezon.rok,ROW_NUMBER() OVER(ORDER BY Wydarzenie.data_czas) \"round\",Wydarzenie.data_czas FROM Wydarzenie INNER JOIN Sezon ON Sezon.id_sezonu = Wydarzenie.id_sezonu WHERE  Sezon.rok = YEAR(GETDATE())) races INNER JOIN Wynik_wyscigu ON id_terminarza = Wynik_wyscigu.id_wyscigu WHERE data_czas < GETDATE() ORDER BY data_czas DESC;";
+                _context.Database.OpenConnection();
+                // last race whose results are available in db
+                var result = await command.ExecuteReaderAsync();
+                while (result.Read())
+                {
+                    year = result.GetInt16(0);
+                    // long to int
+                    round = (int)result.GetInt64(1);
+                }
+            }
             if (++round <= roundsCount)
             {
-                
-                string url = $"http://ergast.com/api/f1/{year}/{round}/qualifying.json";
-                APIHelper api = new(_context,year,round);
-                api.SetQualifyingResults();
-                api.SetRaceResults();
+                while (round <= lastRound)
+                {
+                    api.Round = round;
+                    api.SetRaceResults();
+                    round++;
+                }
             }
+
+            using (var command = _context.Database.GetDbConnection().CreateCommand())
+            {
+                command.CommandText = "SELECT TOP 1 rok,round FROM (SELECT Wydarzenie.id_terminarza,Sezon.rok,ROW_NUMBER() OVER(ORDER BY Wydarzenie.data_czas) 'round',Wydarzenie.data_czas FROM Wydarzenie INNER JOIN Sezon ON Sezon.id_sezonu = Wydarzenie.id_sezonu WHERE Sezon.rok = YEAR(GETDATE())) races INNER JOIN Wynik_wyscigu ON id_terminarza = Wynik_wyscigu.id_wyscigu INNER JOIN Pitstop ON Wynik_wyscigu.id_wyscigu = Pitstop.id_wyscigu WHERE data_czas < GETDATE() ORDER BY data_czas DESC;";
+                _context.Database.OpenConnection();
+                // last race whose results are available in db
+                var result = await command.ExecuteReaderAsync();
+                while (result.Read())
+                {
+                    year = result.GetInt16(0);
+                    // long to int
+                    round = (int)result.GetInt64(1);
+                }
+            }
+            if (++round <= roundsCount)
+            {
+                while (round <= lastRound)
+                {
+                    api.Round = round;
+                    api.SetPitstops();
+                    round++;
+                }
+            }
+
             return RedirectToAction("Index");
         }
 
