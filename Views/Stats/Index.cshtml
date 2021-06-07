@@ -10,7 +10,7 @@
 </section>
 <section id="last-race">
     <h2>@DateTime.Now.Year @ViewBag.LastRaceCircuit</h2><br />
-    <table class="table table-striped">
+    <table class="table table-striped table-responsive-md">
         <thead class="thead-dark">
             <tr>
                 <th scope="col">@localizer["Position"]</th>
@@ -38,14 +38,11 @@
 <section id="drivers">
     <h2>@DateTime.Now.Year @localizer["Drivers"]</h2><br />
 
-    <table class="table">
+    <table class="table table-responsive-md">
         <thead>
             <tr>
                 <th scope="col">
-                    @localizer["Name"]
-                </th>
-                <th scope="col">
-                    @localizer["Surname"]
+                    @localizer["Name"] @localizer["Surname"]
                 </th>
                 <th scope="col">
                     @localizer["Date of birth"]
@@ -60,10 +57,7 @@
             {
                 <tr>
                     <td>
-                        @item.Name
-                    </td>
-                    <td>
-                        @item.Lastname
+                        <a asp-action="Drivers" asp-route-id="@item.DriverId">@item.Name @item.Lastname</a>
                     </td>
                     <td>
                         @item.DateOfBirth.ToShortDateString()

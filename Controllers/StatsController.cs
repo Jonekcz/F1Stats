@@ -81,6 +81,15 @@ namespace F1_Stats.Controllers
             return View();
         }
 
+        [Route("/Stats/Drivers/{id}")]
+        public async Task<IActionResult> Drivers(int id)
+        {
+            if (! _context.Drivers.Any(i => i.DriverId == id)) return RedirectToAction(nameof(Index));
+            var driver = await _context.Drivers.FirstAsync(i => i.DriverId == id);
+            var results = await _context.Results.Include(i=>i.DriverIdNavigation).Include(i=>i.RaceIdNavigation).ThenInclude(i=>i.CircuitIdNavigation).Where(i => i.DriverId == id).OrderByDescending(i=>i.RaceIdNavigation.DateTime).ToListAsync();
+            return View(results);
+        }
+
         public async Task<IActionResult> Teams()
         {
             int year = DateTime.Now.Year;
@@ -149,8 +158,8 @@ namespace F1_Stats.Controllers
                 while(round <= lastRound)
                 {
                     api.SetQualifyingResults();
-                    round++;
                     api.Round = round;
+                    round++;
                 }
             }
 
@@ -172,8 +181,8 @@ namespace F1_Stats.Controllers
                 while (round <= lastRound)
                 {
                     api.Round = round;
-                    api.SetRaceResults();
                     round++;
+                    api.SetRaceResults();
                 }
             }
 
@@ -195,8 +204,8 @@ namespace F1_Stats.Controllers
                 while (round <= lastRound)
                 {
                     api.Round = round;
-                    api.SetPitstops();
                     round++;
+                    api.SetPitstops();
                 }
             }
 

@@ -1,0 +1,40 @@
+﻿@model List<Result>
+<section id="teams">
+    <h2>@Model[0].DriverIdNavigation.Name @Model[0].DriverIdNavigation.Lastname</h2><br />
+
+    <table class="table table-responsive-md">
+        <thead>
+            <tr>
+                <th scope="col">
+                    Data
+                </th>
+                <th scope="col">
+                    Tor
+                </th>
+                <th scope="col">
+                    Pozycja
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+            <tr>
+                <td>
+                    @if (item.RaceIdNavigation.DateTime != null)
+                    {
+                        var datetime = TimeZoneInfo.ConvertTimeFromUtc((DateTime)item.RaceIdNavigation.DateTime, TimeZoneInfo.Local);
+                        @Html.DisplayFor(i => datetime)   
+                    }
+                </td>
+                <td>
+                    @Html.DisplayFor(i => item.RaceIdNavigation.CircuitIdNavigation.Name)
+                </td>
+                <td>
+                    @Html.DisplayFor(i => item.Position)
+                </td>
+            </tr>
+            }
+        </tbody>
+    </table>
+</section>
